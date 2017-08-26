@@ -77,9 +77,9 @@ KDTree::KDTree(int max_points_per_child,  Point const * points_begin, Point cons
         // split points according to median
         auto partition = Helper::split(current_node->points_, current_node->axis_);
 
-        //current_node->splitting_value_ = std::get<0>(partition);
-        //current_node->left_.reset(new KDTreeNode(std::get<1>(partition), (current_node->axis_ + 1) % 2));
-        //current_node->right_.reset(new KDTreeNode(std::get<2>(partition), (current_node->axis_ + 1) % 2));
+        current_node->splitting_value_ = std::get<0>(partition);
+        current_node->left_.reset(new KDTreeNode(std::get<1>(partition), (current_node->axis_ + 1) % 2));
+        current_node->right_.reset(new KDTreeNode(std::get<2>(partition), (current_node->axis_ + 1) % 2));
         
         current_node->points_.clear();
 

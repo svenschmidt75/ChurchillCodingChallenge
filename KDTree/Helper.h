@@ -14,7 +14,7 @@ namespace KDTree_NS {
 
     class KDTREE_EXPORTS_DECL_SYMBOLS Helper {
     public:
-        static std::tuple<std::vector<Point>, std::vector<Point>> split(std::vector<Point> points, int axis);
+        static std::tuple<float, std::vector<Point>, std::vector<Point>> split(std::vector<Point> points, int axis);
     };
 
 } // namespace KDTree_NS

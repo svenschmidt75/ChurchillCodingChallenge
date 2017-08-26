@@ -1,7 +1,7 @@
 #pragma once
 
 /* The following structs are packed with no padding. */
-//#pragma pack(push, 1)
+#pragma pack(push, 1)
 
 /* Defines a point in 2D space with some additional attributes like id and rank. */
 struct Point {
@@ -19,4 +19,4 @@ struct Rect {
     float hy;
 };
 
-//#pragma pack(pop)
+#pragma pack(pop)
