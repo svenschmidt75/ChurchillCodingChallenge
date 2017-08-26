@@ -9,7 +9,7 @@ using namespace KDTree_NS;
 TEST(KDTree, Test1) {
  
     // Arrange
-    KDTree kdtree;
+//    KDTree kdtree;
     
     // Act
 

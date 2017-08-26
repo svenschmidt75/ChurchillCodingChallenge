@@ -3,10 +3,13 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="KDTree.cpp" />
+    <ClCompile Include="KDTreeNode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="DeclSpec.h" />
     <ClInclude Include="KDTree.h" />
+    <ClInclude Include="KDTreeNode.h" />
+    <ClInclude Include="ChurchillHeader.h" />
   </ItemGroup>
 </Project>
