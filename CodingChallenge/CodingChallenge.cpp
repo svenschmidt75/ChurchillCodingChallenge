@@ -1,11 +1,6 @@
-// CodingChallenge.cpp : Defines the entry point for the console application.
-//
+#include "pch.h"
 
-#include "stdafx.h"
-
-
-int main()
-{
+int main() {
     return 0;
 }
 
