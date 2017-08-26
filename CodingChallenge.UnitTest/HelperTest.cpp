@@ -11,6 +11,40 @@
 using namespace KDTree_NS;
 
 
+TEST(Helper, Split_X_NoPoints) {
+
+    // Arrange
+    std::vector<Point> const points;
+
+    // Act
+    auto splits = Helper::split(points, 0);
+
+    // Assert
+    auto split_a = std::get<1>(splits);
+    auto split_b = std::get<2>(splits);
+
+    ASSERT_TRUE(split_a.empty());
+    ASSERT_TRUE(split_b.empty());
+}
+
+TEST(Helper, Split_X_OnePoint) {
+
+    // Arrange
+    std::vector<Point> const points{ Point{ 0, 1,  4.0f, -0.5f } };
+
+    // Act
+    auto splits = Helper::split(points, 0);
+
+    // Assert
+    auto splitting_value = std::get<0>(splits);
+    auto split_a = std::get<1>(splits);
+    auto split_b = std::get<2>(splits);
+
+    ASSERT_EQ(4.0f, splitting_value);
+    ASSERT_EQ(1, split_a.size());
+    ASSERT_EQ(0, split_b.size());
+}
+
 TEST(Helper, Split_X_EvenPoints) {
 
     // Arrange
