@@ -23,7 +23,7 @@ struct SearchContext {
 SearchContext * create(Point const * points_begin, Point const  * points_end) {
     try {
         auto search_context = new SearchContext;
-        search_context->kd_tree = std::make_unique<KDTree>(100, points_begin, points_end);
+        search_context->kd_tree = std::make_unique<KDTree>(uint8_t(100u), points_begin, points_end);
         return search_context;
     }
     catch(...) {}
@@ -50,9 +50,9 @@ SearchContext * destroy(SearchContext * sc) {
 
 
 
-KDTree::KDTree(int max_points_per_child,  Point const * points_begin, Point const  * points_end)
+KDTree::KDTree(uint8_t max_points_per_child,  Point const * points_begin, Point const  * points_end)
     :
-    root_{std::make_unique<KDTreeNode>(std::vector<Point>(points_begin, points_end), 0)},
+    root_{std::make_unique<KDTreeNode>(std::vector<Point>(points_begin, points_end), uint8_t(0))},
     max_points_per_child_{max_points_per_child} {
     
 
@@ -86,4 +86,9 @@ KDTree::KDTree(int max_points_per_child,  Point const * points_begin, Point cons
         to_process.push(&*current_node->left_);
         to_process.push(&*current_node->right_);
     }
+}
+
+uint64_t
+KDTree::depth() const {
+    
 }

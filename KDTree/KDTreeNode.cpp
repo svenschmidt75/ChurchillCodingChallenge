@@ -14,7 +14,7 @@
 using namespace KDTree_NS;
 
 
-KDTreeNode::KDTreeNode(std::vector<Point> points, int axis)
+KDTreeNode::KDTreeNode(std::vector<Point> points, uint8_t axis)
     :
     points_{points},
     axis_{axis} {}

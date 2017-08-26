@@ -19,13 +19,13 @@ namespace KDTree_NS {
         friend class KDTree;
 
     public:
-        explicit KDTreeNode(std::vector<Point> points, int axis);
+        explicit KDTreeNode(std::vector<Point> points, uint8_t axis);
 
         size_t numPoints() const;
 
     private:
         std::vector<Point>          points_;
-        int                         axis_;
+        uint8_t                     axis_;
         float                       splitting_value_;
         std::unique_ptr<KDTreeNode> left_;
         std::unique_ptr<KDTreeNode> right_;
