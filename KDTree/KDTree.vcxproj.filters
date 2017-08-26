@@ -4,6 +4,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="KDTreeNode.cpp" />
+    <ClCompile Include="Helper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -11,5 +12,6 @@
     <ClInclude Include="KDTree.h" />
     <ClInclude Include="KDTreeNode.h" />
     <ClInclude Include="ChurchillHeader.h" />
+    <ClInclude Include="Helper.h" />
   </ItemGroup>
 </Project>

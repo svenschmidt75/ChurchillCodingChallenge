@@ -7,12 +7,18 @@
  */
 #include "pch.h"
 
-#include "../KDTree/ChurchillHeader.h"
-#include "../KDTree/KDTreeNode.h"
-#include "../KDTree/KDTree.h"
-
 
 using namespace KDTree_NS;
+
+
+
+/* TODO SS
+ * 
+ * - test if only one point and partition
+ * 
+ * 
+ * 
+ */
 
 
 TEST(KDTree, CreateSimple) {

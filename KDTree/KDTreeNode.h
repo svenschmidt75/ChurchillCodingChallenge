@@ -26,6 +26,7 @@ namespace KDTree_NS {
     private:
         std::vector<Point>          points_;
         int                         axis_;
+        float                       splitting_value_;
         std::unique_ptr<KDTreeNode> left_;
         std::unique_ptr<KDTreeNode> right_;
     };

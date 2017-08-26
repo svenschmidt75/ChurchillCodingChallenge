@@ -11,3 +11,8 @@
 #include <memory>
 
 #include <gmock/gmock.h>
+
+#include "../KDTree/ChurchillHeader.h"
+#include "../KDTree/KDTreeNode.h"
+#include "../KDTree/KDTree.h"
+#include "../KDTree/Helper.h"

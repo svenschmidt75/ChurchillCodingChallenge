@@ -89,6 +89,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Helper.cpp" />
     <ClCompile Include="KDTree.cpp" />
     <ClCompile Include="KDTreeNode.cpp" />
     <ClCompile Include="pch.cpp">
@@ -99,6 +100,7 @@
   <ItemGroup>
     <ClInclude Include="ChurchillHeader.h" />
     <ClInclude Include="DeclSpec.h" />
+    <ClInclude Include="Helper.h" />
     <ClInclude Include="KDTreeNode.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="KDTree.h" />

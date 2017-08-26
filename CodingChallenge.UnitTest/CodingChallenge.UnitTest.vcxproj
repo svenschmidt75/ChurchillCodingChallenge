@@ -95,6 +95,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="HelperTest.cpp" />
     <ClCompile Include="KDTreeTest.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pch.cpp">

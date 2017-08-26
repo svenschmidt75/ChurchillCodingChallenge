@@ -4,6 +4,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="KDTreeTest.cpp" />
+    <ClCompile Include="HelperTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
