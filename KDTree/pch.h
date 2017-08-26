@@ -9,4 +9,5 @@
 
 #include <cstdint>
 #include <memory>
+#include <queue>
 #include <vector>

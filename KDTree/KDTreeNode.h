@@ -15,8 +15,13 @@ struct Point;
 namespace KDTree_NS {
 
     class KDTreeNode {
+
+        friend class KDTree;
+
     public:
         explicit KDTreeNode(std::vector<Point> points, int axis);
+
+        size_t numPoints() const;
 
     private:
         std::vector<Point>          points_;

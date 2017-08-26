@@ -18,3 +18,8 @@ KDTreeNode::KDTreeNode(std::vector<Point> points, int axis)
     :
     points_{points},
     axis_{axis} {}
+
+size_t
+KDTreeNode::numPoints() const {
+    return points_.size();
+}

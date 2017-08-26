@@ -40,10 +40,11 @@ namespace KDTree_NS {
 
     class KDTREE_EXPORTS_DECL_SYMBOLS KDTree {
     public:
-        explicit KDTree(Point const * points_begin, Point const * points_end);
+        explicit KDTree(int max_points_per_child, Point const * points_begin, Point const * points_end);
 
     private:
         std::unique_ptr<KDTreeNode> root_;
+        int const                   max_points_per_child_;
     };
 
 } // namespace KDTree_NS
