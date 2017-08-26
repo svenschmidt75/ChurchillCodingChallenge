@@ -13,7 +13,7 @@ struct Point;
 
 
 // forward declarations
-GOOGLE_TEST(KDTreeTest, Intersect_Leaf1);
+GOOGLE_TEST(KDTreeTest, Intersect_Leaf_1);
 
 
 
@@ -22,7 +22,7 @@ namespace KDTree_NS {
     class KDTreeNode {
 
         friend class KDTree;
-        FRIEND_GOOGLE_TEST(KDTreeTest, Intersect_Leaf1);
+        FRIEND_GOOGLE_TEST(KDTreeTest, Intersect_Leaf_1);
 
     public:
         explicit KDTreeNode(std::vector<Point> points, uint8_t axis);

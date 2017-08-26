@@ -41,7 +41,7 @@ KDTreeNode::rect_intersects_left_subtree(Rect const rect) const {
 bool
 KDTreeNode::rect_intersects_right_subtree(Rect const rect) const {
     if (axis_ == 0) {
-        return rect.lx >= splitting_value_;
+        return rect.hx >= splitting_value_;
     }
-    return rect.ly >= splitting_value_;
+    return rect.hy >= splitting_value_;
 }
