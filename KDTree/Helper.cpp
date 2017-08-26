@@ -29,9 +29,9 @@ Helper::split(std::vector<Point> points, int axis) {
             median = (points[size / 2 - 1].y + points[size / 2].y) / 2;
     } else {
         if (axis == 0)
-            median = points[size / 2 + 1].x / 2;
+            median = points[size / 2].x;
         else
-            median = points[size / 2 + 1].y / 2;
+            median = points[size / 2].y;
     }
     if (size % 2 == 0) {
         auto lower_bound = std::vector<Point>(points.cbegin(), points.cbegin() + size / 2);
@@ -39,7 +39,7 @@ Helper::split(std::vector<Point> points, int axis) {
         return std::make_tuple(median, lower_bound, upper_bound);
     }
     // convention: include median value in lower bound
-    auto lower_bound = std::vector<Point>(&points[0], &points[size / 2 + 1]);
-    auto upper_bound = std::vector<Point>(&points[size / 2 + 1], &points[size]);
+    auto lower_bound = std::vector<Point>(points.cbegin(), points.cbegin() + size / 2 + 1);
+    auto upper_bound = std::vector<Point>(points.cbegin() + size / 2 + 1, points.cend());
     return std::make_tuple(median, lower_bound, upper_bound);
 }
