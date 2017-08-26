@@ -34,6 +34,7 @@ extern "C" {  // only need to export C interface if
 
 namespace KDTree_NS {
 
+
     // forward declarations
     class KDTreeNode;
 
@@ -42,7 +43,8 @@ namespace KDTree_NS {
     public:
         explicit KDTree(uint8_t max_points_per_child, Point const * points_begin, Point const * points_end);
 
-        uint64_t depth() const;
+        uint64_t                        depth() const;
+        std::vector<KDTreeNode const *> intersect_with_rect(Rect const rect) const;
 
     private:
         std::unique_ptr<KDTreeNode> root_;

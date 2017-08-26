@@ -12,6 +12,7 @@
 
 #include <gmock/gmock.h>
 
+#include "UnitTestForwardDeclarationHelper.h"
 #include "../KDTree/ChurchillHeader.h"
 #include "../KDTree/KDTreeNode.h"
 #include "../KDTree/KDTree.h"

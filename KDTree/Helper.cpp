@@ -9,6 +9,7 @@
 
 #include "ChurchillHeader.h"
 #include "Helper.h"
+#include "KDTreeNode.h"
 
 
 using namespace KDTree_NS;

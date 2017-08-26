@@ -8,6 +8,7 @@
 #pragma once
 
 #include "DeclSpec.h"
+#include "KDTreeNode.h"
 
 
 namespace KDTree_NS {

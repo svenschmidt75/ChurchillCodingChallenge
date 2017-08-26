@@ -12,3 +12,7 @@
 #include <queue>
 #include <vector>
 #include <tuple>
+#include <iostream>
+#include <cassert>
+
+#include "..\CodingChallenge.UnitTest/UnitTestForwardDeclarationHelper.h"

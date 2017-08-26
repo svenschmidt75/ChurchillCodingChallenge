@@ -12,16 +12,25 @@
 struct Point;
 
 
+// forward declarations
+GOOGLE_TEST(KDTreeTest, Intersect_Leaf1);
+
+
+
 namespace KDTree_NS {
 
     class KDTreeNode {
 
         friend class KDTree;
+        FRIEND_GOOGLE_TEST(KDTreeTest, Intersect_Leaf1);
 
     public:
         explicit KDTreeNode(std::vector<Point> points, uint8_t axis);
 
-        size_t numPoints() const;
+        size_t num_points() const;
+        int    depth() const;
+        bool   rect_intersects_left_subtree(Rect const rect) const;
+        bool   rect_intersects_right_subtree(Rect const rect) const;
 
     private:
         std::vector<Point>          points_;

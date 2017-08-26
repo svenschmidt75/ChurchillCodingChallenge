@@ -84,6 +84,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>C:\Users\S.Schmidt\Desktop\CPPDev\googletest-release-1.8.0\googletest-release-1.8.0\googletest\include;C:\Users\S.Schmidt\Desktop\CPPDev\googletest-release-1.8.0\googletest-release-1.8.0\googlemock\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -105,6 +106,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="UnitTestForwardDeclarationHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KDTree\KDTree.vcxproj">
