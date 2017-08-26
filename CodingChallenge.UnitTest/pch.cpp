@@ -7,6 +7,6 @@
            whereas this file is the only one with "Create precompiled /Yc".
  * Author: Sven Schmidt
  * Date  : 08/25/2017
- */
+*/
 
 #include "pch.h"
