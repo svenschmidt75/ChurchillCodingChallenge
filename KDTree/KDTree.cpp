@@ -24,7 +24,7 @@ SearchContext *
 create(Point const * points_begin, Point const  * points_end) {
     try {
         auto search_context = new SearchContext;
-        search_context->kd_tree = std::make_unique<KDTree>(uint8_t(100u), points_begin, points_end);
+        search_context->kd_tree = std::make_unique<KDTree>(1000, points_begin, points_end);
         //auto const depth = search_context->kd_tree->Depth();
         //std::cout << std::endl << "Created tree of depth " << depth << std::endl;
         return search_context;
@@ -55,9 +55,15 @@ int32_t
 search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_points) {
     try {
         KDTree const & kdtree = *sc->kd_tree;
-        auto leafs = kdtree.intersect_with_rect(rect);
+
+        // TODO SS: can this be done in parallel?
+        // i.e. one for left subtree, one for right?
+        auto const leafs = kdtree.intersect_with_rect(rect);
+
+        // TODO SS: can this be done in parallel?
+
         auto points_inside_rect = extract_points_inside_rect(rect, leafs);
-        std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point a, Point b) {
+        std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
             return a.rank < b.rank;
         });
         auto const n_points = std::min(int(points_inside_rect.size()), count);
@@ -86,7 +92,7 @@ destroy(SearchContext * sc) {
 
 
 
-KDTree::KDTree(uint8_t max_points_per_child,  Point const * points_begin, Point const  * points_end)
+KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point const  * points_end)
     :
     root_{std::make_unique<KDTreeNode>(std::vector<Point>(points_begin, points_end), uint8_t(0))},
     max_points_per_child_{max_points_per_child} {

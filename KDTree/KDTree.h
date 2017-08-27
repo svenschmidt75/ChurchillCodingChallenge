@@ -41,14 +41,14 @@ namespace KDTree_NS {
 
     class KDTREE_EXPORTS_DECL_SYMBOLS KDTree {
     public:
-        explicit KDTree(uint8_t max_points_per_child, Point const * points_begin, Point const * points_end);
+        explicit KDTree(uint64_t max_points_per_child, Point const * points_begin, Point const * points_end);
 
         uint64_t                        depth() const;
         std::vector<KDTreeNode const *> intersect_with_rect(Rect const rect) const;
 
     private:
         std::unique_ptr<KDTreeNode> root_;
-        uint8_t const               max_points_per_child_;
+        uint64_t const              max_points_per_child_;
     };
 
 } // namespace KDTree_NS
