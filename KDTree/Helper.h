@@ -16,7 +16,7 @@ namespace KDTree_NS {
     class KDTREE_EXPORTS_DECL_SYMBOLS Helper {
     public:
         static std::tuple<float, std::vector<Point>, std::vector<Point>> split(std::vector<Point> points, int axis);
-        static bool                                                      is_point_in_rect(Point p, Rect r);
+        static bool                                                      is_point_in_rect(Point const & p, Rect const & r);
     };
 
 } // namespace KDTree_NS

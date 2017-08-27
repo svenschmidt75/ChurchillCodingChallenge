@@ -49,7 +49,7 @@ Helper::split(std::vector<Point> points, int axis) {
 }
 
 bool
-Helper::is_point_in_rect(Point p, Rect r) {
+Helper::is_point_in_rect(Point const & p, Rect const & r) {
     bool const is_within_x = p.x >= r.lx && p.x <= r.hx;
     bool const is_within_y = p.y >= r.ly && p.y <= r.hy;
     return is_within_x && is_within_y;

@@ -14,7 +14,7 @@
 using namespace KDTree_NS;
 
 
-KDTreeNode::KDTreeNode(std::vector<Point> points, uint8_t axis)
+KDTreeNode::KDTreeNode(std::vector<Point> const & points, uint8_t axis)
     :
     points_{points},
     axis_{axis},
@@ -36,7 +36,7 @@ KDTreeNode::points() const {
 }
 
 bool
-KDTreeNode::rect_intersects_left_subtree(Rect const rect) const {
+KDTreeNode::rect_intersects_left_subtree(Rect const & rect) const {
     if (axis_ == 0) {
         return rect.lx <= splitting_value_;
     }
@@ -44,7 +44,7 @@ KDTreeNode::rect_intersects_left_subtree(Rect const rect) const {
 }
 
 bool
-KDTreeNode::rect_intersects_right_subtree(Rect const rect) const {
+KDTreeNode::rect_intersects_right_subtree(Rect const & rect) const {
     if (axis_ == 0) {
         return rect.hx >= splitting_value_;
     }

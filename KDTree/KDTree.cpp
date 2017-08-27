@@ -20,11 +20,12 @@ struct SearchContext {
     std::unique_ptr<KDTree> kd_tree;
 };
 
+
 SearchContext *
 create(Point const * points_begin, Point const  * points_end) {
     try {
         auto search_context = new SearchContext;
-        search_context->kd_tree = std::make_unique<KDTree>(1000, points_begin, points_end);
+        search_context->kd_tree = std::make_unique<KDTree>(KDTree::MAX_POINTS_PER_LEAF, points_begin, points_end);
         //auto const depth = search_context->kd_tree->Depth();
         //std::cout << std::endl << "Created tree of depth " << depth << std::endl;
         return search_context;
@@ -36,15 +37,27 @@ create(Point const * points_begin, Point const  * points_end) {
 namespace {
     
     std::vector<Point>
-    extract_points_inside_rect(Rect const rect, std::vector<KDTreeNode const *> const & leafs) {
+    extract_points_inside_rect(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
         std::vector<Point> points_inside_rect;
+        points_inside_rect.reserve(leafs.size() * KDTree::MAX_POINTS_PER_LEAF);
         for (auto const & leaf : leafs) {
             auto const & points = leaf->points();
-            std::back_insert_iterator<std::vector<Point>> const back_it(points_inside_rect);
-            std::copy_if(points.cbegin(), points.cend(), back_it, [&rect](Point p) {
-                bool point_inside_rect = Helper::is_point_in_rect(p, rect);
-                return point_inside_rect;
-            });
+            //std::back_insert_iterator<std::vector<Point>> const back_it(points_inside_rect);
+            //std::copy_if(points.cbegin(), points.cend(), back_it, [&rect](Point p) {
+            //    bool point_inside_rect = Helper::is_point_in_rect(p, rect);
+            //    return point_inside_rect;
+            //});
+
+            int cnt = 0;
+            for (auto const & point : points) {
+                if (cnt == count)
+                    break;
+                bool point_inside_rect = Helper::is_point_in_rect(point, rect);
+                if (point_inside_rect) {
+                    points_inside_rect.push_back(point);
+                    ++cnt;
+                }
+            }
         }
         return points_inside_rect;
     }
@@ -62,16 +75,50 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
 
         // TODO SS: can this be done in parallel?
 
-        auto points_inside_rect = extract_points_inside_rect(rect, leafs);
+        auto points_inside_rect = extract_points_inside_rect(rect, leafs, count);
+
+        if (points_inside_rect.empty() == false) {
+            int a = 1;
+            a++;
+        }
+
         std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
             return a.rank < b.rank;
         });
+
+
+
+
+
+//        std::vector<Point> points_inside_rect;
+
+
+
+
+        //concurrency::parallel_for(size_type{ 0 }, size, chunk_size, [&part_sums, &v1, &v2, vector_size, numberOfProcessors](size_type index) {
+        //    size_type start_row, end_size;
+        //    std::tie(start_row, end_size) = common_NS::getChunkStartEndIndex(vector_size, size_type{ numberOfProcessors }, index);
+        //    double part_result = 0;
+        //    for (size_type i = start_row; i < end_size; ++i) {
+        //        double tmp = v1(i) * v2(i);
+        //        part_result += tmp;
+        //    }
+        //    part_sums.local() += part_result;
+        //}, concurrency::static_partitioner());
+
+
+
+        //concurrency::parallel_invoke(
+        //    [this] {finalizeColumnIndices(); },
+        //    [this] {finalizeRowIndices(); },
+        //    [this] {finalizeElements(); }
+        //);
+
+
+
+
         auto const n_points = std::min(int(points_inside_rect.size()), count);
 
-        //if (points_inside_rect.empty() == false) {
-        //    int a = 1;
-        //    a++;
-        //}
         std::copy_n(points_inside_rect.cbegin(), n_points, out_points);
         return n_points;
     }
@@ -92,7 +139,7 @@ destroy(SearchContext * sc) {
 
 
 
-KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point const  * points_end)
+KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point const * points_end)
     :
     root_{std::make_unique<KDTreeNode>(std::vector<Point>(points_begin, points_end), uint8_t(0))},
     max_points_per_child_{max_points_per_child} {
@@ -113,6 +160,12 @@ KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point
         to_process.pop();
 
         if (current_node->num_points() <= max_points_per_child) {
+
+            // TODO SS: should we sort the points by rank in each leaf?
+            std::sort(current_node->points_.begin(), current_node->points_.end(), [](Point const & a, Point const & b) {
+                return a.rank < b.rank;
+            });
+
             continue;
         }
 
@@ -137,7 +190,7 @@ KDTree::depth() const {
 }
 
 std::vector<KDTreeNode const *>
-KDTree::intersect_with_rect(Rect const rect) const {
+KDTree::intersect_with_rect(Rect const & rect) const {
     std::vector<KDTreeNode const *> leafs;
 
     std::queue<KDTreeNode const *> to_process;
