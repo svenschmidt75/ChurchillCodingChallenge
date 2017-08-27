@@ -40,7 +40,7 @@ TEST(Helper, Split_X_OnePoint) {
     auto split_a = std::get<1>(splits);
     auto split_b = std::get<2>(splits);
 
-    ASSERT_EQ(4.0f, splitting_value);
+    ASSERT_FLOAT_EQ(4.0f, splitting_value);
     ASSERT_EQ(1, split_a.size());
     ASSERT_EQ(0, split_b.size());
 }
@@ -51,7 +51,7 @@ TEST(Helper, Split_X_EvenPoints) {
     std::vector<Point> const points{
         Point{ 0, 1,  1.0f,  0.5f },
         Point{ 0, 1,  2.0f,  0.5f },
-        Point{ 0, 1,  3.0f, -0.5f }, 
+        Point{ 0, 1,  3.0f, -0.5f },
         Point{ 0, 1,  4.0f, -0.5f }, };
 
     // Act
@@ -62,7 +62,7 @@ TEST(Helper, Split_X_EvenPoints) {
     auto split_a = std::get<1>(splits);
     auto split_b = std::get<2>(splits);
 
-    ASSERT_EQ(2.5f, splitting_value);
+    ASSERT_FLOAT_EQ(2.5f, splitting_value);
     ASSERT_EQ(2, split_a.size());
     ASSERT_EQ(2, split_b.size());
 }
@@ -83,7 +83,46 @@ TEST(Helper, Split_X_OddPoints) {
     auto split_a = std::get<1>(splits);
     auto split_b = std::get<2>(splits);
 
-    ASSERT_EQ(2.0f, splitting_value);
+    ASSERT_FLOAT_EQ(2.0f, splitting_value);
     ASSERT_EQ(2, split_a.size());
     ASSERT_EQ(1, split_b.size());
+}
+
+TEST(Helper, Point_In_Rect) {
+
+    // Arrange
+    Point const p{ 0, 1,  0.2f,  0.5f };
+    Rect const r{ -1.0f, -1.0f,  1.0f,  1.0f };
+
+    // Act
+    auto inside = Helper::is_point_in_rect(p, r);
+
+    // Assert
+    ASSERT_TRUE(inside);
+}
+
+TEST(Helper, Point_In_ZeroWidthRect_X) {
+
+    // Arrange
+    Point const p{ 0, 1,  1.0f, 0.5f };
+    Rect const r{ 1.0f, -1.0f, 1.0f, 1.0f };
+
+    // Act
+    auto inside = Helper::is_point_in_rect(p, r);
+
+    // Assert
+    ASSERT_TRUE(inside);
+}
+
+TEST(Helper, Point_In_ZeroWidthRect_Y) {
+
+    // Arrange
+    Point const p{ 0, 1,  1.0f,  0.5f };
+    Rect const r{ 1.0f, 0.5f, 1.0f, 0.5f };
+
+    // Act
+    auto inside = Helper::is_point_in_rect(p, r);
+
+    // Assert
+    ASSERT_TRUE(inside);
 }

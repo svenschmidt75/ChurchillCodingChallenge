@@ -9,13 +9,13 @@ Loading C:\Users\S.Schmidt\Desktop\CPPDev\CodingChallenge\x64\Debug\KDTree.dll..
 Loading acme.dll... Not found.
 1 algorithms loaded.
 
-Preparing 10000 random points...done (0.3440ms).
-Preparing 1000 random queries...done (0.0250ms).
+Preparing 10000 random points...done (0.3350ms).
+Preparing 1000 random queries...done (0.0190ms).
 
 Testing algorithm #0 (KDTree.dll):
 Robustness check...done.
-Loading points...done (131.4990ms).
-Making queries...done (0.0290ms, avg 0.0000ms/query).
+Loading points...done (132.0680ms).
+Making queries...done (190.3480ms, avg 0.1903ms/query).
 Release points...done (memory used: 1MB).
 
 Comparing the results of algorithms: There's nothing to compare to, load more DLLs!

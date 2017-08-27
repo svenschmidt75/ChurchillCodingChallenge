@@ -34,8 +34,14 @@ create(Point const * points_begin, Point const  * points_end) {
 }
 
 int32_t
-search(SearchContext * /*sc*/, Rect const /*rect*/, int32_t const /*count*/, Point * /*out_points*/) {
+search(SearchContext * sc, Rect const rect, int32_t const /*count*/, Point * /*out_points*/) {
     try {
+        KDTree const & kdtree = *sc->kd_tree;
+        auto leafs = kdtree.intersect_with_rect(rect);
+
+        // extract all points that lie within the rect
+        // order points by smallest rank first
+        // copy up to count ones
         return 0;
     }
     catch(...) {}
@@ -108,7 +114,8 @@ KDTree::intersect_with_rect(Rect const rect) const {
     while (to_process.empty() == false) {
         KDTreeNode const * current_node = to_process.front();
         to_process.pop();
-        assert(current_node != nullptr);
+        if (current_node == nullptr)
+            continue;
         if (current_node->points_.empty() == false) {
             // leaf node
             leafs.push_back(current_node);

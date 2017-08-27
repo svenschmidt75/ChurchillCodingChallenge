@@ -47,3 +47,10 @@ Helper::split(std::vector<Point> points, int axis) {
     auto upper_bound = std::vector<Point>(points.cbegin() + size / 2 + 1, points.cend());
     return std::make_tuple(median, lower_bound, upper_bound);
 }
+
+bool
+Helper::is_point_in_rect(Point p, Rect r) {
+    bool const is_within_x = p.x >= r.lx && p.x <= r.hx;
+    bool const is_within_y = p.y >= r.ly && p.y <= r.hy;
+    return is_within_x && is_within_y;
+}
