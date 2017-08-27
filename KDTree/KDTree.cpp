@@ -93,10 +93,13 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
             //    a++;
             //}
 
-            std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
+            //std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
+            //    return a.rank < b.rank;
+            //});
+
+            concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
                 return a.rank < b.rank;
             });
-
 
             auto const n_points = std::min(int(points_inside_rect.size()), count);
 

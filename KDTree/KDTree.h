@@ -41,7 +41,7 @@ namespace KDTree_NS {
 
     class KDTREE_EXPORTS_DECL_SYMBOLS KDTree {
     public:
-        static uint64_t const MAX_POINTS_PER_LEAF = 2000;
+        static uint64_t const MAX_POINTS_PER_LEAF = 10000;
 
     public:
         explicit KDTree(uint64_t max_points_per_child, Point const * points_begin, Point const * points_end);

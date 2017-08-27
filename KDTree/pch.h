@@ -17,4 +17,6 @@
 #include <iostream>
 #include <cassert>
 
+#include <ppl.h>
+
 #include "..\CodingChallenge.UnitTest/UnitTestForwardDeclarationHelper.h"
