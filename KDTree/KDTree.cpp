@@ -40,6 +40,13 @@ namespace {
     extract_points_inside_rect(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
         std::vector<Point> points_inside_rect;
         points_inside_rect.reserve(leafs.size() * KDTree::MAX_POINTS_PER_LEAF);
+
+        // TODO SS: do this in parallel, i.e. for each leaf with points, we extact the points
+        // inside the rect
+        // At the end, we extract the 1st count from each one and merge them and resort them.
+        // We then return the 1st count.
+
+
         for (auto const & leaf : leafs) {
             auto const & points = leaf->points();
             //std::back_insert_iterator<std::vector<Point>> const back_it(points_inside_rect);
@@ -59,6 +66,8 @@ namespace {
                 }
             }
         }
+
+
         return points_inside_rect;
     }
 
@@ -76,15 +85,25 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
         // TODO SS: can this be done in parallel?
 
         auto points_inside_rect = extract_points_inside_rect(rect, leafs, count);
-
         if (points_inside_rect.empty() == false) {
-            int a = 1;
-            a++;
-        }
+            //std::cout << std::endl << "Number of points in rect to sort: " << points_inside_rect.size() << std::endl;
 
-        std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
-            return a.rank < b.rank;
-        });
+            //if (points_inside_rect.empty() == false) {
+            //    int a = 1;
+            //    a++;
+            //}
+
+            std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
+                return a.rank < b.rank;
+            });
+
+
+            auto const n_points = std::min(int(points_inside_rect.size()), count);
+
+            std::copy_n(points_inside_rect.cbegin(), n_points, out_points);
+            return n_points;
+        }
+        return 0;
 
 
 
@@ -116,11 +135,6 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
 
 
 
-
-        auto const n_points = std::min(int(points_inside_rect.size()), count);
-
-        std::copy_n(points_inside_rect.cbegin(), n_points, out_points);
-        return n_points;
     }
     catch(...) {}
     return -1;
