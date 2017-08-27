@@ -33,16 +33,41 @@ create(Point const * points_begin, Point const  * points_end) {
     return nullptr;
 }
 
+namespace {
+    
+    std::vector<Point>
+    extract_points_inside_rect(Rect const rect, std::vector<KDTreeNode const *> const & leafs) {
+        std::vector<Point> points_inside_rect;
+        for (auto const & leaf : leafs) {
+            auto const & points = leaf->points();
+            std::back_insert_iterator<std::vector<Point>> const back_it(points_inside_rect);
+            std::copy_if(points.cbegin(), points.cend(), back_it, [&rect](Point p) {
+                bool point_inside_rect = Helper::is_point_in_rect(p, rect);
+                return point_inside_rect;
+            });
+        }
+        return points_inside_rect;
+    }
+
+}
+
 int32_t
-search(SearchContext * sc, Rect const rect, int32_t const /*count*/, Point * /*out_points*/) {
+search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_points) {
     try {
         KDTree const & kdtree = *sc->kd_tree;
         auto leafs = kdtree.intersect_with_rect(rect);
+        auto points_inside_rect = extract_points_inside_rect(rect, leafs);
+        std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point a, Point b) {
+            return a.rank < b.rank;
+        });
+        auto const n_points = std::min(int(points_inside_rect.size()), count);
 
-        // extract all points that lie within the rect
-        // order points by smallest rank first
-        // copy up to count ones
-        return 0;
+        //if (points_inside_rect.empty() == false) {
+        //    int a = 1;
+        //    a++;
+        //}
+        std::copy_n(points_inside_rect.cbegin(), n_points, out_points);
+        return n_points;
     }
     catch(...) {}
     return -1;

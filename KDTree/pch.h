@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#define _SECURE_SCL_DEPRECATE 0
+
 #include <cstdint>
 #include <memory>
 #include <queue>

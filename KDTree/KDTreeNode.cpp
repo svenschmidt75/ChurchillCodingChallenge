@@ -30,6 +30,11 @@ KDTreeNode::depth() const {
     return 1 + std::max(left_ == nullptr ? 0 : left_->depth(), right_ == nullptr ? 0 : right_->depth());
 }
 
+std::vector<Point> const &
+KDTreeNode::points() const {
+    return points_;
+}
+
 bool
 KDTreeNode::rect_intersects_left_subtree(Rect const rect) const {
     if (axis_ == 0) {

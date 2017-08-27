@@ -8,6 +8,9 @@
 #pragma once
 
 
+#pragma warning(disable:4251)
+
+
  // forward declarations
 struct Point;
 
@@ -27,10 +30,11 @@ namespace KDTree_NS {
     public:
         explicit KDTreeNode(std::vector<Point> points, uint8_t axis);
 
-        size_t num_points() const;
-        int    depth() const;
-        bool   rect_intersects_left_subtree(Rect const rect) const;
-        bool   rect_intersects_right_subtree(Rect const rect) const;
+        size_t                     num_points() const;
+        int                        depth() const;
+        std::vector<Point> const & points() const;
+        bool                       rect_intersects_left_subtree(Rect const rect) const;
+        bool                       rect_intersects_right_subtree(Rect const rect) const;
 
     private:
         std::vector<Point>          points_;
