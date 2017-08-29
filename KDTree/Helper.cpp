@@ -25,7 +25,7 @@ Helper::split(std::vector<Point> points, int axis) {
     });
     auto const size = points.size();
     float median;
-    if (size % 2 == 0) {
+    if (size % 2 == 0) { 
         if (axis == 0)
             median = (points[size / 2 - 1].x + points[size / 2].x) / 2;
         else
