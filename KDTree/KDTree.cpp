@@ -36,9 +36,9 @@ create(Point const * points_begin, Point const  * points_end) {
 
 namespace {
     
-    std::vector<Point>
-    extract_points_inside_rect(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
-        std::vector<Point> points_inside_rect;
+    std::vector<uint64_t>
+    extract_points_inside_rect(std::vector<Point> const & points, Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
+        std::vector<uint64_t> points_inside_rect;
         points_inside_rect.reserve(leafs.size() * KDTree::MAX_POINTS_PER_LEAF);
 
         // TODO SS: do this in parallel, i.e. for each leaf with points, we extact the points
@@ -48,7 +48,7 @@ namespace {
 
 
         for (auto const & leaf : leafs) {
-            auto const & points = leaf->points();
+            auto const & point_indices = leaf->points();
             //std::back_insert_iterator<std::vector<Point>> const back_it(points_inside_rect);
             //std::copy_if(points.cbegin(), points.cend(), back_it, [&rect](Point p) {
             //    bool point_inside_rect = Helper::is_point_in_rect(p, rect);
@@ -56,10 +56,10 @@ namespace {
             //});
 
             int cnt = 0;
-            for (auto const & point : points) {
+            for (auto const & point : point_indices) {
                 if (cnt == count)
                     break;
-                bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
+                bool const point_inside_rect = Helper::is_point_in_rect(points[point], rect);
                 if (point_inside_rect) {
                     points_inside_rect.push_back(point);
                     ++cnt;
@@ -72,8 +72,8 @@ namespace {
     }
 
 
-    std::vector<std::vector<Point>>
-    extract_points_inside_rect3(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
+    std::vector<std::vector<uint64_t>>
+    extract_points_inside_rect3(std::vector<Point> const & points, Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
 //        std::vector<std::vector<Point>> pps;
 //        pps.reserve(leafs.size());
 //
@@ -101,24 +101,24 @@ namespace {
 //        }
 ////       return pps;
 //    
-        std::vector<std::vector<Point>> pps2;
+        std::vector<std::vector<uint64_t>> pps2;
         pps2.resize(leafs.size());
 
-        concurrency::parallel_for(size_t(0), leafs.size(), size_t(1), [&pps2, &rect, &leafs, count](size_t index) {
+        concurrency::parallel_for(size_t(0), leafs.size(), size_t(1), [&pps2, &rect, &leafs, &points, count](size_t index) {
             auto & vector = pps2[index];
             vector.reserve(count);
-            auto const & points = leafs[index]->points();
+            auto const & point_indices = leafs[index]->points();
             int cnt = 0;
-            for (auto const & point : points) {
+            for (auto const & point : point_indices) {
                 if (cnt == count)
                     break;
-                bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
+                bool const point_inside_rect = Helper::is_point_in_rect(points[point], rect);
                 if (point_inside_rect) {
-                    vector.push_back(point);
+                    vector.emplace_back(point);
                     ++cnt;
                 }
             }
-        }, Concurrency::simple_partitioner{1});
+        });
 
         //for (auto const & ps : pps2)
         //    pps2.push_back(ps);
@@ -145,24 +145,24 @@ namespace {
 
 
     struct N {
-        explicit N(std::vector<Point> const & points)
+        explicit N(std::vector<uint64_t> const & points)
             : points{ points }, pos{ 0 } {}
 
     public:
-        std::vector<Point> const & points;
-        int                        pos;
+        std::vector<uint64_t> const & points;
+        int                           pos;
     };
 
-    std::vector<Point>
-    extract_points_inside_rect2(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
-        std::vector<Point> points;
+    std::vector<uint64_t>
+    extract_points_inside_rect2(std::vector<Point> const & points, Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
+        std::vector<uint64_t> point_indices;
 
         if (leafs.empty())
-            return points;
+            return point_indices;
 
-        points.reserve(count);
+        point_indices.reserve(count);
 
-        auto pps = extract_points_inside_rect3(rect, leafs, count);
+        auto pps = extract_points_inside_rect3(points, rect, leafs, count);
         std::vector<N> Ns;
         for (auto const & ps : pps) {
             if (ps.empty() == false) {
@@ -178,7 +178,8 @@ namespace {
             for (int i = 0; i < Ns.size(); ++i) {
                 auto & n = Ns[i];
                 if (n.pos < n.points.size()) {
-                    auto rank = n.points[n.pos].rank;
+                    auto const & point = points[n.points[n.pos]];
+                    auto rank = point.rank;
                     if (rank < min_rank) {
                         index_minimum = i;
                         min_rank = rank;
@@ -186,13 +187,14 @@ namespace {
                 }
             }
             if (index_minimum >= 0) {
-                points.push_back(Ns[index_minimum].points[Ns[index_minimum].pos]);
-                ++Ns[index_minimum].pos;
+                auto & n = Ns[index_minimum];
+                point_indices.push_back(n.points[n.pos]);
+                ++n.pos;
             }
             ++c;
         }
 
-        return points;
+        return point_indices;
     }
 
 }
@@ -209,7 +211,7 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
         // TODO SS: can this be done in parallel?
 
         //auto points_inside_rect = extract_points_inside_rect(rect, leafs, count);
-        auto points_inside_rect = extract_points_inside_rect2(rect, leafs, count);
+        auto points_inside_rect = extract_points_inside_rect2(kdtree.points(), rect, leafs, count);
         if (points_inside_rect.empty() == false) {
             //std::cout << std::endl << "Number of points in rect to sort: " << points_inside_rect.size() << std::endl;
 
@@ -228,7 +230,10 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
 
             auto const n_points = std::min(int(points_inside_rect.size()), count);
 
-            std::copy_n(points_inside_rect.cbegin(), n_points, out_points);
+            for (size_t i = 0; i < n_points; ++i) {
+                auto const & p = kdtree.points();
+                out_points[i] = p[points_inside_rect[i]];
+            }
             return n_points;
         }
         return 0;
@@ -279,11 +284,23 @@ destroy(SearchContext * sc) {
 }
 
 
+namespace {
+    
+    std::vector<uint64_t>
+    generate_sequence(uint64_t size) {
+        std::vector<uint64_t> sequence;
+        sequence.resize(size);
+        int n = {0};
+        std::generate(sequence.begin(), sequence.end(), [&n] { return n++; });
+        return sequence;
+    }
+}
 
 
 KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point const * points_end)
     :
-    root_{std::make_unique<KDTreeNode>(std::vector<Point>(points_begin, points_end), uint8_t(0))},
+    points_{std::vector<Point>(points_begin, points_end)},
+    root_{std::make_unique<KDTreeNode>(generate_sequence(points_.size()), uint8_t(0))},
     max_points_per_child_{max_points_per_child} {
     
 
@@ -303,14 +320,16 @@ KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point
 
         if (current_node->num_points() <= max_points_per_child) {
             // leaf node, sort points by rank
-            concurrency::parallel_sort(current_node->points_.begin(), current_node->points_.end(), [](Point const & a, Point const & b) {
-                return a.rank < b.rank;
+            concurrency::parallel_sort(current_node->points_.begin(), current_node->points_.end(), [this](uint64_t i1, uint64_t i2) {
+                auto const & p1 = points_[i1];
+                auto const & p2 = points_[i2];
+                return p1.rank < p2.rank;
             });
             continue;
         }
 
         // split points at median
-        auto partition = Helper::split(current_node->points_, current_node->axis_);
+        auto partition = Helper::split(points_, current_node->points_, current_node->axis_);
         current_node->splitting_value_ = std::get<0>(partition);
         current_node->left_.reset(new KDTreeNode(std::get<1>(partition), (current_node->axis_ + 1) % 2));
         current_node->right_.reset(new KDTreeNode(std::get<2>(partition), (current_node->axis_ + 1) % 2));
@@ -355,4 +374,9 @@ KDTree::intersect_with_rect(Rect const & rect) const {
         }
     }
     return leafs;
+}
+
+std::vector<Point> const &
+KDTree::points() const {
+    return points_;
 }
