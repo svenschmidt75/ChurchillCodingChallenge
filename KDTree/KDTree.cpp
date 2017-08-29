@@ -59,7 +59,7 @@ namespace {
             for (auto const & point : points) {
                 if (cnt == count)
                     break;
-                bool point_inside_rect = Helper::is_point_in_rect(point, rect);
+                bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
                 if (point_inside_rect) {
                     points_inside_rect.push_back(point);
                     ++cnt;
@@ -69,6 +69,130 @@ namespace {
 
 
         return points_inside_rect;
+    }
+
+
+    std::vector<std::vector<Point>>
+    extract_points_inside_rect3(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
+//        std::vector<std::vector<Point>> pps;
+//        pps.reserve(leafs.size());
+//
+//        // TODO SS: do this in parallel, i.e. for each leaf with points, we extact the points
+//        // inside the rect
+//        // At the end, we extract the 1st count from each one and merge them and resort them.
+//        // We then return the 1st count.
+//
+//
+//        for (auto const & leaf : leafs) {
+//            std::vector<Point> points_inside_rect;
+//            points_inside_rect.reserve(count);
+//            auto const & points = leaf->points();
+//            int cnt = 0;
+//            for (auto const & point : points) {
+//                if (cnt == count)
+//                    break;
+//                bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
+//                if (point_inside_rect) {
+//                    points_inside_rect.push_back(point);
+//                    ++cnt;
+//                }
+//            }
+//            pps.push_back(points_inside_rect);
+//        }
+////       return pps;
+//    
+        std::vector<std::vector<Point>> pps2;
+        pps2.resize(leafs.size());
+
+        concurrency::parallel_for(size_t(0), leafs.size(), size_t(1), [&pps2, &rect, &leafs, count](size_t index) {
+            auto & vector = pps2[index];
+            vector.reserve(count);
+            auto const & points = leafs[index]->points();
+            int cnt = 0;
+            for (auto const & point : points) {
+                if (cnt == count)
+                    break;
+                bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
+                if (point_inside_rect) {
+                    vector.push_back(point);
+                    ++cnt;
+                }
+            }
+        }, Concurrency::simple_partitioner{1});
+
+        //for (auto const & ps : pps2)
+        //    pps2.push_back(ps);
+
+        return pps2;
+
+        //concurrency::parallel_for(size_type{ 0 }, size, chunk_size, [&part_sums, &v1, &v2, vector_size, numberOfProcessors](size_type index) {
+        //    size_type start_row, end_size;
+        //    std::tie(start_row, end_size) = common_NS::getChunkStartEndIndex(vector_size, size_type{ numberOfProcessors }, index);
+        //    double part_result = 0;
+        //    for (size_type i = start_row; i < end_size; ++i) {
+        //        double tmp = v1(i) * v2(i);
+        //        part_result += tmp;
+        //    }
+        //    part_sums.local() += part_result;
+        //}, concurrency::static_partitioner());
+
+
+
+
+
+
+    }
+
+
+    struct N {
+        explicit N(std::vector<Point> const & points)
+            : points{ points }, pos{ 0 } {}
+
+    public:
+        std::vector<Point> const & points;
+        int                        pos;
+    };
+
+    std::vector<Point>
+    extract_points_inside_rect2(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
+        std::vector<Point> points;
+
+        if (leafs.empty())
+            return points;
+
+        points.reserve(count);
+
+        auto pps = extract_points_inside_rect3(rect, leafs, count);
+        std::vector<N> Ns;
+        for (auto const & ps : pps) {
+            if (ps.empty() == false) {
+                Ns.emplace_back(N{ ps });
+            }
+        }
+
+        int c = 0;
+        while (c < count) {
+            int index_minimum = -1;
+            int min_rank = std::numeric_limits<int32_t>::max();
+            // find minimum rank
+            for (int i = 0; i < Ns.size(); ++i) {
+                auto & n = Ns[i];
+                if (n.pos < n.points.size()) {
+                    auto rank = n.points[n.pos].rank;
+                    if (rank < min_rank) {
+                        index_minimum = i;
+                        min_rank = rank;
+                    }
+                }
+            }
+            if (index_minimum >= 0) {
+                points.push_back(Ns[index_minimum].points[Ns[index_minimum].pos]);
+                ++Ns[index_minimum].pos;
+            }
+            ++c;
+        }
+
+        return points;
     }
 
 }
@@ -84,7 +208,8 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
 
         // TODO SS: can this be done in parallel?
 
-        auto points_inside_rect = extract_points_inside_rect(rect, leafs, count);
+        //auto points_inside_rect = extract_points_inside_rect(rect, leafs, count);
+        auto points_inside_rect = extract_points_inside_rect2(rect, leafs, count);
         if (points_inside_rect.empty() == false) {
             //std::cout << std::endl << "Number of points in rect to sort: " << points_inside_rect.size() << std::endl;
 
@@ -97,9 +222,9 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
             //    return a.rank < b.rank;
             //});
 
-            concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
-                return a.rank < b.rank;
-            });
+            //concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
+            //    return a.rank < b.rank;
+            //});
 
             auto const n_points = std::min(int(points_inside_rect.size()), count);
 
@@ -177,12 +302,10 @@ KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point
         to_process.pop();
 
         if (current_node->num_points() <= max_points_per_child) {
-
-            // TODO SS: should we sort the points by rank in each leaf?
-            std::sort(current_node->points_.begin(), current_node->points_.end(), [](Point const & a, Point const & b) {
+            // leaf node, sort points by rank
+            concurrency::parallel_sort(current_node->points_.begin(), current_node->points_.end(), [](Point const & a, Point const & b) {
                 return a.rank < b.rank;
             });
-
             continue;
         }
 

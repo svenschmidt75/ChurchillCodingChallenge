@@ -20,8 +20,7 @@ Helper::split(std::vector<Point> points, int axis) {
     if (points.empty())
         return std::make_tuple<float, std::vector<Point>, std::vector<Point>>(0, {}, {});
 
-    //TODO SS: use parallel policy
-    std::sort(points.begin(), points.end(), [axis](Point const & a, Point const & b) {
+    concurrency::parallel_sort(points.begin(), points.end(), [axis](Point const & a, Point const & b) {
         return axis == 0 ? a.x < b.x : a.y < b.y;
     });
     auto const size = points.size();
