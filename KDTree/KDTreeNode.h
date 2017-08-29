@@ -28,16 +28,16 @@ namespace KDTree_NS {
 
 
     public:
-        explicit KDTreeNode(std::vector<uint64_t> const & points, uint8_t axis);
+        explicit KDTreeNode(std::vector<Point> const & points, uint8_t axis);
 
-        size_t                        num_points() const;
-        int                           depth() const;
-        std::vector<uint64_t> const & points() const;
-        bool                          rect_intersects_left_subtree(Rect const & rect) const;
-        bool                          rect_intersects_right_subtree(Rect const & rect) const;
+        size_t                     num_points() const;
+        int                        depth() const;
+        std::vector<Point> const & points() const;
+        bool                       rect_intersects_left_subtree(Rect const & rect) const;
+        bool                       rect_intersects_right_subtree(Rect const & rect) const;
 
     private:
-        std::vector<uint64_t>       points_;
+        std::vector<Point>          points_;
         uint8_t                     axis_;
         float                       splitting_value_;
         std::unique_ptr<KDTreeNode> left_;
