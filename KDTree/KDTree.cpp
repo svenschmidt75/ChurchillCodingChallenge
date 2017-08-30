@@ -74,73 +74,26 @@ namespace {
 
     std::vector<std::vector<Point>>
     extract_points_inside_rect3(Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
-//        std::vector<std::vector<Point>> pps;
-//        pps.reserve(leafs.size());
-//
-//        // TODO SS: do this in parallel, i.e. for each leaf with points, we extact the points
-//        // inside the rect
-//        // At the end, we extract the 1st count from each one and merge them and resort them.
-//        // We then return the 1st count.
-//
-//
-//        for (auto const & leaf : leafs) {
-//            std::vector<Point> points_inside_rect;
-//            points_inside_rect.reserve(count);
-//            auto const & points = leaf->points();
-//            int cnt = 0;
-//            for (auto const & point : points) {
-//                if (cnt == count)
-//                    break;
-//                bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
-//                if (point_inside_rect) {
-//                    points_inside_rect.push_back(point);
-//                    ++cnt;
-//                }
-//            }
-//            pps.push_back(points_inside_rect);
-//        }
-////       return pps;
-//    
         std::vector<std::vector<Point>> pps2;
-        pps2.resize(leafs.size());
+        size_t const size = leafs.size();
+        pps2.resize(size);
 
-        concurrency::parallel_for(size_t(0), leafs.size(), size_t(1), [&pps2, &rect, &leafs, count](size_t index) {
+        concurrency::parallel_for(size_t(0), size, [&pps2, &rect, &leafs, count](size_t index) {
             auto & vector = pps2[index];
             vector.reserve(count);
             auto const & points = leafs[index]->points();
             int cnt = 0;
             for (auto const & point : points) {
-                if (cnt == count)
-                    break;
                 bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
                 if (point_inside_rect) {
                     vector.push_back(point);
-                    ++cnt;
+                    if (++cnt == count)
+                        break;
                 }
             }
-        }, Concurrency::simple_partitioner{1});
-
-        //for (auto const & ps : pps2)
-        //    pps2.push_back(ps);
+        });
 
         return pps2;
-
-        //concurrency::parallel_for(size_type{ 0 }, size, chunk_size, [&part_sums, &v1, &v2, vector_size, numberOfProcessors](size_type index) {
-        //    size_type start_row, end_size;
-        //    std::tie(start_row, end_size) = common_NS::getChunkStartEndIndex(vector_size, size_type{ numberOfProcessors }, index);
-        //    double part_result = 0;
-        //    for (size_type i = start_row; i < end_size; ++i) {
-        //        double tmp = v1(i) * v2(i);
-        //        part_result += tmp;
-        //    }
-        //    part_sums.local() += part_result;
-        //}, concurrency::static_partitioner());
-
-
-
-
-
-
     }
 
 
