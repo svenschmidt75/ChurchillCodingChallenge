@@ -26,7 +26,7 @@ create(Point const * points_begin, Point const  * points_end) {
     try {
         auto search_context = new SearchContext;
         search_context->kd_tree = std::make_unique<KDTree>(KDTree::MAX_POINTS_PER_LEAF, points_begin, points_end);
-        //auto const depth = search_context->kd_tree->Depth();
+        //auto const depth = search_context->kd_tree->depth();
         //std::cout << std::endl << "Created tree of depth " << depth << std::endl;
         return search_context;
     }
@@ -80,17 +80,18 @@ namespace {
 
         concurrency::parallel_for(size_t(0), size, [&pps2, &rect, &leafs, count](size_t index) {
             auto & vector = pps2[index];
-            vector.reserve(count);
+            vector.resize(count);
             auto const & points = leafs[index]->points();
             int cnt = 0;
             for (auto const & point : points) {
                 bool const point_inside_rect = Helper::is_point_in_rect(point, rect);
                 if (point_inside_rect) {
-                    vector.push_back(point);
-                    if (++cnt == count)
+                    vector[cnt++] = point;
+                    if (cnt == count)
                         break;
                 }
             }
+            vector.resize(cnt);
         });
 
         return pps2;
@@ -158,6 +159,8 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
         // TODO SS: can this be done in parallel?
         // i.e. one for left subtree, one for right?
         auto const leafs = kdtree.intersect_with_rect(rect);
+
+        //std::cout << std::endl << "Rect intersects " << leafs.size() << " leafs..." << std::endl;
 
         // TODO SS: can this be done in parallel?
 
@@ -259,6 +262,9 @@ KDTree::KDTree(uint64_t max_points_per_child,  Point const * points_begin, Point
             concurrency::parallel_sort(current_node->points_.begin(), current_node->points_.end(), [](Point const & a, Point const & b) {
                 return a.rank < b.rank;
             });
+
+            //std::cout << std::endl << "Leaf has " << current_node->num_points() << " points" << std::endl;
+
             continue;
         }
 
