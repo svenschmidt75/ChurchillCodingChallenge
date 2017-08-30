@@ -14,7 +14,7 @@
 using namespace KDTree_NS;
 
 
-KDTreeNode::KDTreeNode(std::vector<Point> const & points, uint8_t axis)
+KDTreeNode::KDTreeNode(std::vector<uint64_t> const & points, uint8_t axis)
     :
     points_{points},
     axis_{axis},
@@ -30,7 +30,7 @@ KDTreeNode::depth() const {
     return 1 + std::max(left_ == nullptr ? 0 : left_->depth(), right_ == nullptr ? 0 : right_->depth());
 }
 
-std::vector<Point> const &
+std::vector<uint64_t> const &
 KDTreeNode::points() const {
     return points_;
 }
