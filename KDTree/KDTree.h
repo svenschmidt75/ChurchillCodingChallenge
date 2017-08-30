@@ -51,7 +51,8 @@ namespace KDTree_NS {
         std::vector<Point> const &      points() const;
 
     private:
-        std::vector<Point>          points_; 
+        std::vector<Point>          points_x_; 
+        std::vector<Point>          points_y_;
         std::unique_ptr<KDTreeNode> root_;
         uint64_t const              max_points_per_child_;
     };

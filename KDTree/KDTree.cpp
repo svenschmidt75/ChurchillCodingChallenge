@@ -168,14 +168,21 @@ namespace {
 
 KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point const * points_end)
     :
-    points_{ std::vector<Point>(points_begin, points_end) },
-    root_{ std::make_unique<KDTreeNode>(generate_sequence(points_.size()), uint8_t(0)) }, 
-    max_points_per_child_{ max_points_per_child } {
+    max_points_per_child_{max_points_per_child} {
 
-
-
-    // TODO SS: only split both x and y once, as Point vector is static
     // TODO SS: as Point vector is static, arrange hierarchy in array, rather than nodes etc. (better cache utilization?)
+
+    points_x_.assign(points_begin, points_end);
+    concurrency::parallel_sort(points_x_.begin(), points_x_.end(), [this](Point const & p1, Point const & p2) {
+        return p1.x < p2.x;
+    });
+
+    points_y_.assign(points_begin, points_end);
+    concurrency::parallel_sort(points_y_.begin(), points_y_.end(), [this](Point const & p1, Point const & p2) {
+        return p1.y < p2.y;
+    });
+
+    root_ = std::make_unique<KDTreeNode>(generate_sequence(points_x_.size()), uint8_t(0), 0, points_x_.size() - 1, 0, points_y_.size() - 1);
 
 
     // subdivide tree
@@ -199,10 +206,26 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
         }
 
         // split points at median
-        auto partition = Helper::split(points_, current_node->points_, current_node->axis_);
-        current_node->splitting_value_ = std::get<0>(partition);
-        current_node->left_.reset(new KDTreeNode(std::get<1>(partition), (current_node->axis_ + 1) % 2));
-        current_node->right_.reset(new KDTreeNode(std::get<2>(partition), (current_node->axis_ + 1) % 2));
+//        auto partition = Helper::split(points_, current_node->points_, current_node->axis_);
+        if (current_node->axis_ == 0)
+        {
+            auto arity = (current_node->xmax() - current_node->xmin() + 1) % 2;
+            if (arity == 0) {
+                auto median_index = (current_node->xmax() - current_node->xmin() + 1) / 2;
+                auto splitting_value = (points_x_[median_index - 1].x + points_x_[median_index].x) / 2;
+
+
+                int n_left = median_index - 1 - current_node->xmin();
+                int n_right = median_index - current_node->xmax();
+
+
+                current_node->splitting_value_ = splitting_value;
+                current_node->left_.reset(new KDTreeNode(points_x_   , (current_node->axis_ + 1) % 2));
+                current_node->right_.reset(new KDTreeNode(std::get<2>(partition), (current_node->axis_ + 1) % 2));
+            }
+
+        }
+        
 
         // release points at current node
         current_node->points_.clear();
