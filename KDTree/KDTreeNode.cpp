@@ -14,11 +14,12 @@
 using namespace KDTree_NS;
 
 
-KDTreeNode::KDTreeNode(std::vector<Point> const & points, uint8_t axis, uint64_t x_min, uint64_t x_max, uint64_t y_min, uint64_t y_max)
+KDTreeNode::KDTreeNode(std::vector<Point> const & points_x, std::vector<Point> const & points_y, uint8_t axis, uint64_t x_min, uint64_t x_max, uint64_t y_min, uint64_t y_max)
     :
-    points_{points},
-    axis_{axis},
     splitting_value_{0},
+    axis_{axis},
+    points_x_{points_x},
+    points_y_{points_y},
     x_min_{x_min},
     x_max_{x_max},
     y_max_{y_max},
@@ -26,7 +27,9 @@ KDTreeNode::KDTreeNode(std::vector<Point> const & points, uint8_t axis, uint64_t
 
 size_t
 KDTreeNode::num_points() const {
-    return points_.size();
+    if (points_x_.empty())
+        return 0;
+    return 1 + (axis_ == 0 ? x_max_ - x_min_ : y_max_ - y_min_);
 }
 
 int
@@ -64,4 +67,9 @@ uint64_t KDTreeNode::ymin() const {
 
 uint64_t KDTreeNode::ymax() const {
     return y_max_;
+}
+
+bool
+KDTreeNode::is_leaf() const {
+    return left_ == nullptr && right_ == nullptr;
 }

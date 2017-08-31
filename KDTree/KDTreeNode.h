@@ -28,7 +28,7 @@ namespace KDTree_NS {
 
 
     public:
-        explicit KDTreeNode(std::vector<Point> const & points, uint8_t axis, uint64_t x_min, uint64_t x_max, uint64_t y_min, uint64_t y_max);
+        explicit KDTreeNode(std::vector<Point> const & points_x, std::vector<Point> const & points_y, uint8_t axis, uint64_t x_min, uint64_t x_max, uint64_t y_min, uint64_t y_max);
 
         size_t                        num_points() const;
         int                           depth() const;
@@ -38,17 +38,19 @@ namespace KDTree_NS {
         uint64_t                      xmax() const;
         uint64_t                      ymin() const;
         uint64_t                      ymax() const;
+        bool                          is_leaf() const;
 
     private:
-        std::vector<Point>          points_;
-        uint8_t                     axis_;
         float                       splitting_value_;
-        uint64_t                    x_min_;
-        uint64_t                    x_max_;
-        uint64_t                    y_max_;
-        uint64_t                    y_min_;
-        std::unique_ptr<KDTreeNode> left_;
-        std::unique_ptr<KDTreeNode> right_;
+        uint8_t                     axis_;
+        std::vector<Point> const &  points_x_;
+        std::vector<Point> const &  points_y_;
+        uint64_t                    x_min_;  
+        uint64_t                    x_max_;  
+        uint64_t                    y_max_;  
+        uint64_t                    y_min_;  
+        std::unique_ptr<KDTreeNode> left_;  
+        std::unique_ptr<KDTreeNode> right_;  
     };
 
 
