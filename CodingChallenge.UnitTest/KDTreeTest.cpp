@@ -94,7 +94,7 @@ TEST(KDTreeTest, Intersect_Leafs_6_7_8_9_10) {
         Point{ 0, 1,  8.0f, 9.0f }, };
     KDTree kdtree(1, &points[0], &points[points.size() - 1] + 1);
 
-    auto rect = Rect{ 6, 6, 9, 11 };
+    const auto rect = Rect{ 6, 6, 9, 11 };
 
     // Act
     auto leafs = kdtree.intersect_with_rect(rect);
@@ -119,7 +119,7 @@ TEST(KDTreeTest, Intersect_Leafs_1_3_4) {
         Point{ 0, 1,  8.0f, 9.0f }, };
     KDTree kdtree(1, &points[0], &points[points.size() - 1] + 1);
 
-    auto rect = Rect{ 1, 13, 3, 15 };
+    const auto rect = Rect{ 1, 13, 3, 15 };
 
     // Act
     auto leafs = kdtree.intersect_with_rect(rect);

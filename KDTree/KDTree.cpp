@@ -112,7 +112,7 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
         KDTreeNode * current_node = to_process.front();
         to_process.pop();
 
-        if (current_node->num_points() < max_points_per_child)
+        if (current_node->num_points() <= max_points_per_child)
             continue;
 
         std::vector<Point> const child_points{std::move(current_node->points())};
