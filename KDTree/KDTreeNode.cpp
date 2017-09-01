@@ -50,3 +50,8 @@ KDTreeNode::rect_intersects_right_subtree(Rect const & rect) const {
     }
     return rect.hy >= splitting_value_;
 }
+
+bool
+KDTreeNode::is_leaf() const {
+    return points_.size() > 0;
+}

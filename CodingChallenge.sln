@@ -1,16 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.10
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDTree", "KDTree\KDTree.vcxproj", "{7BA108DD-FD17-4D9A-9968-F950B999FB0D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CodingChallenge.UnitTest", "CodingChallenge.UnitTest\CodingChallenge.UnitTest.vcxproj", "{C510AA8E-D550-4503-A6F6-67F58A08C770}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Release|x64 = Release|x64
@@ -21,6 +18,7 @@ Global
 		{7BA108DD-FD17-4D9A-9968-F950B999FB0D}.Release|x64.ActiveCfg = Release|x64
 		{7BA108DD-FD17-4D9A-9968-F950B999FB0D}.Release|x64.Build.0 = Release|x64
 		{C510AA8E-D550-4503-A6F6-67F58A08C770}.Debug|x64.ActiveCfg = Debug|x64
+		{C510AA8E-D550-4503-A6F6-67F58A08C770}.Debug|x64.Build.0 = Debug|x64
 		{C510AA8E-D550-4503-A6F6-67F58A08C770}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
@@ -28,6 +26,9 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {03998676-4A84-4785-9E36-1A5CBA3DD16B}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

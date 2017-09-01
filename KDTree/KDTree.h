@@ -46,12 +46,10 @@ namespace KDTree_NS {
     public:
         explicit KDTree(uint64_t max_points_per_child, Point const * points_begin, Point const * points_end);
 
-        uint64_t                        depth() const;
-        std::vector<KDTreeNode const *> intersect_with_rect(Rect const & rect) const;
-        std::vector<Point> const &      points() const;
+        uint64_t           depth() const;
+        std::vector<Point> intersect_with_rect(Rect const & rect) const;
 
     private:
-        std::vector<Point>          points_; 
         std::unique_ptr<KDTreeNode> root_;
         uint64_t const              max_points_per_child_;
     };

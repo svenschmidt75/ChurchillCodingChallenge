@@ -168,48 +168,53 @@ namespace {
 
 KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point const * points_end)
     :
-    points_{ std::vector<Point>(points_begin, points_end) },
-    root_{ std::make_unique<KDTreeNode>(generate_sequence(points_.size()), uint8_t(0)) }, 
-    max_points_per_child_{ max_points_per_child } {
+    max_points_per_child_{max_points_per_child} {
 
-
-
-    // TODO SS: only split both x and y once, as Point vector is static
     // TODO SS: as Point vector is static, arrange hierarchy in array, rather than nodes etc. (better cache utilization?)
 
+    std::vector<Point> points(points_begin, points_end);
+    concurrency::parallel_sort(points.begin(), points.end(), [this](Point const & p1, Point const & p2) {
+        return p1.x < p2.x;
+    });
+    root_ = std::make_unique<KDTreeNode>(points, uint8_t(0));
 
-    // subdivide tree
+    // create tree hierarchy
     std::queue<KDTreeNode *> to_process;
     to_process.push(&*root_);
     while (to_process.empty() == false) {
         KDTreeNode * current_node = to_process.front();
         to_process.pop();
 
-        if (current_node->num_points() <= max_points_per_child) {
-            // leaf node, sort points by rank
-            concurrency::parallel_sort(current_node->points_.begin(), current_node->points_.end(), [this](uint64_t i1, uint64_t i2) {
-                auto const & p1 = points_[i1];
-                auto const & p2 = points_[i2];
-                return p1.rank < p2.rank;
-            });
+        if (current_node->num_points() < max_points_per_child) {
+            std::vector<Point> child_points{current_node->points()};
+            if (current_node->axis_ == 0) {
+                concurrency::parallel_sort(child_points.begin(), child_points.end(), [](Point const & p1, Point const & p2) {
+                    return p1.x < p2.x;
+                });
+            } else {
+                concurrency::parallel_sort(child_points.begin(), child_points.end(), [](Point const & p1, Point const & p2) {
+                    return p1.y < p2.y;
+                });
+            }
+            auto const child_splitting_axis = (current_node->axis_ + 1) % 2;
+
 
             //std::cout << std::endl << "Leaf has " << current_node->num_points() << " points" << std::endl;
 
-            continue;
+            // split points at median
+            auto partition = Helper::split(points_, current_node->points_, current_node->axis_);
+            current_node->splitting_value_ = std::get<0>(partition);
+            current_node->left_.reset(new KDTreeNode(std::get<1>(partition), i));
+            current_node->right_.reset(new KDTreeNode(std::get<2>(partition), i));
+
+            // release points at current node
+            current_node->points_.clear();
+
+            // split child nodes
+            to_process.push(&*current_node->left_);
+            to_process.push(&*current_node->right_);
         }
 
-        // split points at median
-        auto partition = Helper::split(points_, current_node->points_, current_node->axis_);
-        current_node->splitting_value_ = std::get<0>(partition);
-        current_node->left_.reset(new KDTreeNode(std::get<1>(partition), (current_node->axis_ + 1) % 2));
-        current_node->right_.reset(new KDTreeNode(std::get<2>(partition), (current_node->axis_ + 1) % 2));
-
-        // release points at current node
-        current_node->points_.clear();
-
-        // split child nodes
-        to_process.push(&*current_node->left_);
-        to_process.push(&*current_node->right_);
     }
 }
 
@@ -218,7 +223,7 @@ KDTree::depth() const {
     return root_->depth();
 }
 
-std::vector<KDTreeNode const *>
+std::vector<Point>
 KDTree::intersect_with_rect(Rect const & rect) const {
     std::vector<KDTreeNode const *> leafs;
 
@@ -245,9 +250,4 @@ KDTree::intersect_with_rect(Rect const & rect) const {
         }
     }
     return leafs;
-}
-
-std::vector<Point> const &
-KDTree::points() const {
-    return points_;
 }
