@@ -47,6 +47,42 @@ Helper::split(std::vector<Point> const & points, std::vector<uint64_t> point_ind
     return std::make_tuple(median, lower_bound, upper_bound);
 }
 
+std::tuple<float, std::vector<Point>, std::vector<Point>>
+Helper::split(std::vector<Point> points, int axis) {
+    if (points.empty())
+        return std::make_tuple<float, std::vector<Point>, std::vector<Point>>(0, {}, {});
+    if (axis == 0) {
+        concurrency::parallel_sort(points.begin(), points.end(), [](Point const & p1, Point const & p2) {
+            return p1.x < p2.x;
+        });
+    }
+    else {
+        concurrency::parallel_sort(points.begin(), points.end(), [](Point const & p1, Point const & p2) {
+            return p1.y < p2.y;
+        });
+    }
+    auto const size = points.size();
+    float median;
+    if (size % 2 == 0) {
+        auto const & p1 = points[size / 2 - 1];
+        auto const & p2 = points[size / 2];
+        median = (axis == 0 ? p1.x + p2.x : p1.y + p2.y) / 2;
+    }
+    else {
+        auto const & p = points[size / 2];
+        median = axis == 0 ? p.x : p.y;
+    }
+    if (size % 2 == 0) {
+        auto lower_bound = std::vector<Point>(points.cbegin(), points.cbegin() + size / 2);
+        auto upper_bound = std::vector<Point>(points.cbegin() + size / 2, points.cend());
+        return std::make_tuple(median, lower_bound, upper_bound);
+    }
+    // convention: include median value in lower bound
+    auto lower_bound = std::vector<Point>(points.cbegin(), points.cbegin() + size / 2 + 1);
+    auto upper_bound = std::vector<Point>(points.cbegin() + size / 2 + 1, points.cend());
+    return std::make_tuple(median, lower_bound, upper_bound);
+}
+
 bool
 Helper::is_point_in_rect(Point const & p, Rect const & r) {
     return p.x >= r.lx && p.x <= r.hx && p.y >= r.ly && p.y <= r.hy;

@@ -37,40 +37,10 @@ create(Point const * points_begin, Point const  * points_end) {
 
 namespace {
 
-    std::vector<uint64_t>
-    extract_points_inside_rect(std::vector<Point> const & points, Rect const & rect, std::vector<KDTreeNode const *> const & leafs, int32_t const count) {
-        std::vector<uint64_t> ps(points.size(), points.size());
-        for (auto const & leaf : leafs) {
-            auto const & leaf_points = leaf->points();
-            int cnt = 0;
-            for (uint64_t pi : leaf_points) {
-                auto const & p = points[pi];
-                if (Helper::is_point_in_rect(p, rect)) {
-                    if (ps[p.rank] < points.size())
-                        throw std::runtime_error("should not be != 0");
-                    ps[p.rank] = pi;
-                    if (++cnt == count)
-                        break;
-                }
-            }
-        }
-        std::vector<uint64_t> finals;
-        finals.reserve(count);
-        int cnt = 0;
-        for (auto i = 0; i < ps.size(); ++i) {
-            if (ps[i] < points.size()) {
-                finals.push_back(ps[i]);
-                if (++cnt == count)
-                    break;
-            }
-        }
-        return finals;
-    }
-
 }
 
 int32_t
-search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_points) {
+search(SearchContext * sc, Rect const rect, int32_t const /*count*/, Point * /*out_points*/) {
     try {
         KDTree const & kdtree = *sc->kd_tree;
 
@@ -82,8 +52,8 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
 
         // TODO SS: can this be done in parallel?
 
-        auto points_inside_rect = extract_points_inside_rect(kdtree.points(), rect, leafs, count);
-        if (points_inside_rect.empty() == false) {
+        //auto points_inside_rect = extract_points_inside_rect(kdtree.points(), rect, leafs, count);
+        //if (points_inside_rect.empty() == false) {
             //std::cout << std::endl << "Number of points in rect to sort: " << points_inside_rect.size() << std::endl;
 
             //if (points_inside_rect.empty() == false) {
@@ -98,7 +68,7 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
             //concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
             //    return a.rank < b.rank;
             //});
-
+/*
             auto const n_points = std::min(int(points_inside_rect.size()), count);
 
             auto const & p = kdtree.points();
@@ -106,7 +76,7 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
                 out_points[i] = p[points_inside_rect[i]];
             } 
             return n_points;
-        }
+        }*/
         return 0;
 
 
@@ -185,27 +155,20 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
         KDTreeNode * current_node = to_process.front();
         to_process.pop();
 
+        if (current_node->is_leaf())
+            continue;
+
         if (current_node->num_points() < max_points_per_child) {
             std::vector<Point> child_points{current_node->points()};
-            if (current_node->axis_ == 0) {
-                concurrency::parallel_sort(child_points.begin(), child_points.end(), [](Point const & p1, Point const & p2) {
-                    return p1.x < p2.x;
-                });
-            } else {
-                concurrency::parallel_sort(child_points.begin(), child_points.end(), [](Point const & p1, Point const & p2) {
-                    return p1.y < p2.y;
-                });
-            }
-            auto const child_splitting_axis = (current_node->axis_ + 1) % 2;
-
-
-            //std::cout << std::endl << "Leaf has " << current_node->num_points() << " points" << std::endl;
+            uint8_t const child_splitting_axis = (current_node->axis_ + 1) % 2;
 
             // split points at median
-            auto partition = Helper::split(points_, current_node->points_, current_node->axis_);
+            auto partition = Helper::split(child_points, child_splitting_axis);
             current_node->splitting_value_ = std::get<0>(partition);
-            current_node->left_.reset(new KDTreeNode(std::get<1>(partition), i));
-            current_node->right_.reset(new KDTreeNode(std::get<2>(partition), i));
+            current_node->left_.reset(new KDTreeNode(std::get<1>(partition),child_splitting_axis));
+            current_node->right_.reset(new KDTreeNode(std::get<2>(partition), child_splitting_axis));
+
+            //std::cout << std::endl << "Leaf has " << current_node->num_points() << " points" << std::endl;
 
             // release points at current node
             current_node->points_.clear();
@@ -214,7 +177,6 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
             to_process.push(&*current_node->left_);
             to_process.push(&*current_node->right_);
         }
-
     }
 }
 
@@ -225,7 +187,7 @@ KDTree::depth() const {
 
 std::vector<Point>
 KDTree::intersect_with_rect(Rect const & rect) const {
-    std::vector<KDTreeNode const *> leafs;
+    std::vector<Point> leafs;
 
     std::queue<KDTreeNode const *> to_process;
     to_process.push(&*root_);
