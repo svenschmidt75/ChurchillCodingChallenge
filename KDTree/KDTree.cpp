@@ -40,20 +40,20 @@ namespace {
 }
 
 int32_t
-search(SearchContext * sc, Rect const rect, int32_t const /*count*/, Point * /*out_points*/) {
+search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_points) {
     try {
         KDTree const & kdtree = *sc->kd_tree;
 
         // TODO SS: can this be done in parallel?
         // i.e. one for left subtree, one for right?
-        auto const leafs = kdtree.intersect_with_rect(rect);
+        auto points_inside_rect = kdtree.intersect_with_rect(rect);
 
-        //std::cout << std::endl << "Rect intersects " << leafs.size() << " leafs..." << std::endl;
+//        std::cout << std::endl << "Rect contains " << leafs.size() << " points..." << std::endl;
 
         // TODO SS: can this be done in parallel?
 
         //auto points_inside_rect = extract_points_inside_rect(kdtree.points(), rect, leafs, count);
-        //if (points_inside_rect.empty() == false) {
+        if (points_inside_rect.empty() == false) {
             //std::cout << std::endl << "Number of points in rect to sort: " << points_inside_rect.size() << std::endl;
 
             //if (points_inside_rect.empty() == false) {
@@ -61,54 +61,16 @@ search(SearchContext * sc, Rect const rect, int32_t const /*count*/, Point * /*o
             //    a++;
             //}
 
-            //std::sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
-            //    return a.rank < b.rank;
-            //});
-
-            //concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
-            //    return a.rank < b.rank;
-            //});
-/*
+            concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
+                return a.rank < b.rank;
+            });
             auto const n_points = std::min(int(points_inside_rect.size()), count);
-
-            auto const & p = kdtree.points();
             for (size_t i = 0; i < n_points; ++i) {
-                out_points[i] = p[points_inside_rect[i]];
+                out_points[i] = points_inside_rect[i];
             } 
             return n_points;
-        }*/
+        }
         return 0;
-
-
-
-
-
-        //        std::vector<Point> points_inside_rect;
-
-
-
-
-                //concurrency::parallel_for(size_type{ 0 }, size, chunk_size, [&part_sums, &v1, &v2, vector_size, numberOfProcessors](size_type index) {
-                //    size_type start_row, end_size;
-                //    std::tie(start_row, end_size) = common_NS::getChunkStartEndIndex(vector_size, size_type{ numberOfProcessors }, index);
-                //    double part_result = 0;
-                //    for (size_type i = start_row; i < end_size; ++i) {
-                //        double tmp = v1(i) * v2(i);
-                //        part_result += tmp;
-                //    }
-                //    part_sums.local() += part_result;
-                //}, concurrency::static_partitioner());
-
-
-
-                //concurrency::parallel_invoke(
-                //    [this] {finalizeColumnIndices(); },
-                //    [this] {finalizeRowIndices(); },
-                //    [this] {finalizeElements(); }
-                //);
-
-
-
     }
     catch (...) {}
     return -1;
@@ -155,28 +117,27 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
         KDTreeNode * current_node = to_process.front();
         to_process.pop();
 
-        if (current_node->is_leaf())
+        if (current_node->num_points() < max_points_per_child)
             continue;
 
-        if (current_node->num_points() < max_points_per_child) {
-            std::vector<Point> child_points{current_node->points()};
-            uint8_t const child_splitting_axis = (current_node->axis_ + 1) % 2;
+        std::vector<Point> const child_points{current_node->points()};
 
-            // split points at median
-            auto partition = Helper::split(child_points, child_splitting_axis);
-            current_node->splitting_value_ = std::get<0>(partition);
-            current_node->left_.reset(new KDTreeNode(std::get<1>(partition),child_splitting_axis));
-            current_node->right_.reset(new KDTreeNode(std::get<2>(partition), child_splitting_axis));
+        // split points at median
+        auto partition = Helper::split(child_points, current_node->axis_);
+        current_node->splitting_value_ = std::get<0>(partition);
 
-            //std::cout << std::endl << "Leaf has " << current_node->num_points() << " points" << std::endl;
+        uint8_t const child_splitting_axis = (current_node->axis_ + 1) % 2;
+        current_node->left_.reset(new KDTreeNode(std::get<1>(partition),child_splitting_axis));
+        current_node->right_.reset(new KDTreeNode(std::get<2>(partition), child_splitting_axis));
 
-            // release points at current node
-            current_node->points_.clear();
+        //std::cout << std::endl << "Leaf has " << current_node->num_points() << " points" << std::endl;
 
-            // split child nodes
-            to_process.push(&*current_node->left_);
-            to_process.push(&*current_node->right_);
-        }
+        // release points at current node
+        current_node->points_.clear();
+
+        // split child nodes
+        to_process.push(&*current_node->left_);
+        to_process.push(&*current_node->right_);
     }
 }
 
@@ -196,9 +157,47 @@ KDTree::intersect_with_rect(Rect const & rect) const {
         to_process.pop();
         if (current_node == nullptr)
             continue;
-        if (current_node->points_.empty() == false) {
+        if (current_node->is_leaf()) {
             // leaf node
-            leafs.push_back(current_node);
+            if (current_node->axis_ == 0) {
+                // find all points that are in the range [rect.lx, rect.hx]
+                auto x1 = std::lower_bound(current_node->points().cbegin(), current_node->points().cend(), rect.lx, [](Point const & p, float r) {
+                    return  p.x < r;
+                });
+                auto x2 = std::upper_bound(current_node->points().cbegin(), current_node->points().cend(), rect.hx, [](float r, Point const & p) {
+                    return  r < p.x;
+                });
+                if (x1 != current_node->points().cend() && x2 != current_node->points().cend()) {
+                    for (; x1 <= x2; ++x1) {
+                        Point const & p = *x1;
+                        if (p.x < rect.lx || p.x > rect.hx)
+                            continue;
+                        if (p.y >= rect.ly && p.y <= rect.hy) {
+//                            std::cout << "Point (" << p.x << "," << p.y << ") is in rect ((" << rect.lx << "," << rect.hx << "),(" << rect.ly << "," << rect.hy << ")..." << std::endl;
+                            leafs.push_back(p);
+                        }
+                    }
+                }
+            } else {
+                // find all points that are in the range [rect.ly, rect.hy]
+                auto y1 = std::lower_bound(current_node->points().cbegin(), current_node->points().cend(), rect.ly, [](Point const & p, float r) {
+                    return  p.y < r;
+                });
+                auto y2 = std::upper_bound(current_node->points().cbegin(), current_node->points().cend(), rect.hy, [](float r, Point const & p) {
+                    return  r < p.y;
+                });
+                if (y1 != current_node->points().cend() && y2 != current_node->points().cend()) {
+                    for (; y1 <= y2; ++y1) {
+                        Point const & p = *y1;
+                        if (p.y < rect.ly || p.y > rect.hy)
+                            continue;
+                        if (p.x >= rect.lx && p.x <= rect.hx) {
+//                            std::cout << "Point (" << p.x << "," << p.y << ") is in rect ((" << rect.lx << "," << rect.hx << "),(" << rect.ly << "," << rect.hy << ")..." << std::endl;
+                            leafs.push_back(p);
+                        }
+                    }
+                }
+            }
         }
         else {
             if (current_node->rect_intersects_left_subtree(rect)) {
