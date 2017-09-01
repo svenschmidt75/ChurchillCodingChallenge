@@ -7,6 +7,8 @@
  */
 #pragma once
 
+#include "DeclSpec.h"
+
 
 #pragma warning(disable:4251)
 
@@ -21,7 +23,7 @@ GOOGLE_TEST(KDTreeTest, Intersect_Leaf_1);
 
 namespace KDTree_NS {
 
-    class KDTreeNode {
+    class KDTREE_EXPORTS_DECL_SYMBOLS KDTreeNode {
 
 
         friend class KDTree;

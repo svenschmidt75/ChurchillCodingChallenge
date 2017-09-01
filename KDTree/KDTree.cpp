@@ -87,7 +87,7 @@ namespace {
     generate_sequence(uint64_t size) {
         std::vector<uint64_t> sequence;
         sequence.resize(size);
-        int n = { 0 };
+        int n = {0};
         std::generate(sequence.begin(), sequence.end(), [&n] { return n++; });
         return sequence;
     }

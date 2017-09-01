@@ -54,17 +54,20 @@ Helper::split(std::vector<Point> points, int axis) {
 std::vector<Point>
 Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & rect) {
     std::vector<Point> points_inside_rect;
-    for (auto const & leaf : leafs) {
+    for (auto leaf : leafs) {
+        const auto points_begin = leaf->points().cbegin();
+        const auto points_end = leaf->points().cend();
         if (leaf->splitting_axis() == 0) {
             // find all points that are in the range [rect.lx, rect.hx]
-            auto x1 = std::lower_bound(leaf->points().cbegin(), leaf->points().cend(), rect.lx, [](Point const & p, float r) {
+            // Note: The points MUST be sorted in x!!!
+            auto x1 = std::lower_bound(points_begin, points_end, rect.lx, [](Point const & p, float r) {
                 return  p.x < r;
             });
-            auto x2 = std::upper_bound(leaf->points().cbegin(), leaf->points().cend(), rect.hx, [](float r, Point const & p) {
+            auto x2 = std::upper_bound(points_begin, points_end, rect.hx, [](float r, Point const & p) {
                 return  r < p.x;
             });
-            if (x1 != leaf->points().cend() && x2 != leaf->points().cend()) {
-                for (; x1 <= x2; ++x1) {
+            if (x1 != points_end) {
+                for (; x1 != x2 && x1 != points_end; ++x1) {
                     Point const & p = *x1;
                     if (p.x < rect.lx || p.x > rect.hx)
                         continue;
@@ -77,14 +80,15 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
         }
         else {
             // find all points that are in the range [rect.ly, rect.hy]
-            auto y1 = std::lower_bound(leaf->points().cbegin(), leaf->points().cend(), rect.ly, [](Point const & p, float r) {
+            // Note: The points MUST be sorted in y!!!
+            auto y1 = std::lower_bound(points_begin, points_end, rect.ly, [](Point const & p, float r) {
                 return  p.y < r;
             });
-            auto y2 = std::upper_bound(leaf->points().cbegin(), leaf->points().cend(), rect.hy, [](float r, Point const & p) {
+            auto y2 = std::upper_bound(points_begin, points_end, rect.hy, [](float r, Point const & p) {
                 return  r < p.y;
             });
-            if (y1 != leaf->points().cend() && y2 != leaf->points().cend()) {
-                for (; y1 <= y2; ++y1) {
+            if (y1 != points_end) {
+                for (; y1 != y2 && y1 != points_end; ++y1) {
                     Point const & p = *y1;
                     if (p.y < rect.ly || p.y > rect.hy)
                         continue;
