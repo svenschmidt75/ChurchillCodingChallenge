@@ -55,8 +55,12 @@ std::vector<Point>
 Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & rect) {
     std::vector<Point> points_inside_rect;
     for (auto leaf : leafs) {
-        const auto points_begin = leaf->points().cbegin();
-        const auto points_end = leaf->points().cend();
+        std::vector<Point> leaf_points = leaf->points();
+        concurrency::parallel_sort(leaf_points.begin(), leaf_points.end(), [](Point const & a, Point const & b) {
+            return a.x < b.x;
+        });
+        const auto points_begin = leaf_points.cbegin();
+        const auto points_end = leaf_points.cend();
         if (leaf->splitting_axis() == 0) {
             // find all points that are in the range [rect.lx, rect.hx]
             // Note: The points MUST be sorted in x!!!
@@ -66,6 +70,24 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
             auto x2 = std::upper_bound(points_begin, points_end, rect.hx, [](float r, Point const & p) {
                 return  r < p.x;
             });
+
+
+
+            std::vector<Point> ps = leaf->points();
+            std::vector<Point> ps1;
+            concurrency::parallel_sort(ps.begin(), ps.end(), [](Point const & a, Point const & b) {
+                return a.x < b.x;
+            });
+            for (auto i = 0; i < ps.size(); ++i) {
+                Point const p = ps[i];
+                if (Helper::is_point_in_rect(p, rect)) {
+                    ps1.push_back(p);
+                }
+            }
+
+            std::vector<Point> ps2;
+
+
             if (x1 != points_end) {
                 for (; x1 != x2 && x1 != points_end; ++x1) {
                     Point const & p = *x1;
@@ -74,9 +96,16 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     if (p.y >= rect.ly && p.y <= rect.hy) {
                         //                            std::cout << "Point (" << p.x << "," << p.y << ") is in rect ((" << rect.lx << "," << rect.hx << "),(" << rect.ly << "," << rect.hy << ")..." << std::endl;
                         points_inside_rect.push_back(p);
+                        ps2.push_back(p);
                     }
                 }
             }
+
+            if (ps1.size() != ps2.size()) {
+                int a = 1;
+                a++;
+            }
+
         }
         else {
             // find all points that are in the range [rect.ly, rect.hy]
@@ -87,6 +116,24 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
             auto y2 = std::upper_bound(points_begin, points_end, rect.hy, [](float r, Point const & p) {
                 return  r < p.y;
             });
+
+
+
+            std::vector<Point> ps1;
+            for (auto i = 0; i < leaf->points().size(); ++i) {
+                Point const p = leaf->points()[i];
+                if (Helper::is_point_in_rect(p, rect)) {
+                    ps1.push_back(p);
+                }
+            }
+
+
+            concurrency::parallel_sort(ps1.begin(), ps1.end(), [](Point const & a, Point const & b) {
+                return a.y < b.y;
+            });
+
+            std::vector<Point> ps2;
+
             if (y1 != points_end) {
                 for (; y1 != y2 && y1 != points_end; ++y1) {
                     Point const & p = *y1;
@@ -95,8 +142,15 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     if (p.x >= rect.lx && p.x <= rect.hx) {
                         //                            std::cout << "Point (" << p.x << "," << p.y << ") is in rect ((" << rect.lx << "," << rect.hx << "),(" << rect.ly << "," << rect.hy << ")..." << std::endl;
                         points_inside_rect.push_back(p);
+                        ps2.push_back(p);
                     }
                 }
+            }
+
+
+            if (ps1.size() != ps2.size()) {
+                int a = 1;
+                a++;
             }
         }
     }
