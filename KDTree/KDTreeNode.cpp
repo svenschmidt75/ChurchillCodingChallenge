@@ -35,6 +35,11 @@ KDTreeNode::points() const {
     return points_;
 }
 
+uint8_t
+KDTreeNode::splitting_axis() const {
+    return axis_;
+}
+
 bool
 KDTreeNode::rect_intersects_left_subtree(Rect const & rect) const {
     if (axis_ == 0) {

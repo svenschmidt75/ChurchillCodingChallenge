@@ -23,6 +23,7 @@ namespace KDTree_NS {
 
     class KDTreeNode {
 
+
         friend class KDTree;
         FRIEND_GOOGLE_TEST(KDTreeTest, Intersect_Leaf_1);
 
@@ -33,6 +34,7 @@ namespace KDTree_NS {
         size_t                     num_points() const;
         int                        depth() const;
         std::vector<Point> const & points() const;
+        uint8_t                    splitting_axis() const;
         bool                       rect_intersects_left_subtree(Rect const & rect) const;
         bool                       rect_intersects_right_subtree(Rect const & rect) const;
         bool                       is_leaf() const;
