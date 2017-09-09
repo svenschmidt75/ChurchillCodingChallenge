@@ -38,22 +38,54 @@ create(Point const * points_begin, Point const  * points_end) {
 
 int32_t
 search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_points) {
+
+    Rect m = rect;
+    m.lx += 900;
+    m.lx *= 1E4;
+    m.hx += 900;
+    m.hx *= 1E4;
+    m.ly += 600;
+    m.ly *= 1E3;
+    m.hy += 600;
+    m.hy *= 1E3;
+
+
+    bool compare = false;
     try {
         KDTree const & kdtree = *sc->kd_tree;
 
         // TODO SS: can this be done in parallel?
         // i.e. one for left subtree, one for right?
-        auto leafs = kdtree.intersect_with_rect(rect);
+        auto leafs = kdtree.intersect_with_rect(m);
         if (leafs.empty() == false) {
             //if (points_inside_rect.empty() == false) {
             //    int a = 1;
             //    a++;
             //}
-            auto points_inside_rect = Helper::intersect(leafs, rect);
+            
+
+
+            auto points_inside_rect = Helper::intersect(leafs, m);
             if (points_inside_rect.empty() == false) {
                 concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
                     return a.rank < b.rank;
                 });
+
+                if (compare) {
+                    std::vector<Point> ps;
+                    for (auto i = 0; i < kdtree.points().size(); ++i) {
+                        Point const p = kdtree.points()[i];
+                        if (Helper::is_point_in_rect(p, m)) {
+                            ps.push_back(p);
+                        }
+                    }
+                    concurrency::parallel_sort(ps.begin(), ps.end(), [](Point const & a, Point const & b) {
+                        return a.rank < b.rank;
+                    });
+
+                }
+
+
                 auto const n_points = std::min(int(points_inside_rect.size()), count);
                 for (size_t i = 0; i < n_points; ++i) {
                     //Point const p = points_inside_rect[i];
@@ -102,11 +134,35 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
     // TODO SS: as Point vector is static, arrange hierarchy in array, rather than nodes etc. (better cache utilization?)
 
     std::vector<Point> points(points_begin, points_end);
+    for (auto & p : points) {
+        p.x += 900;
+        p.x *= 1E4;
+
+        p.y += 600;
+        p.y *= 1E3;
+    }
+
+
+
+
+
+
+
+
+
+
+
     points_ = points;
     concurrency::parallel_sort(points.begin(), points.end(), [this](Point const & p1, Point const & p2) {
         return p1.x < p2.x;
     });
     root_ = std::make_unique<KDTreeNode>(points, uint8_t(0));
+
+
+
+
+
+
 
     // create tree hierarchy
     std::queue<KDTreeNode *> to_process;
@@ -126,7 +182,7 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
 
         // points should be both
         std::vector<Point> l = std::move(std::get<1>(partition));
-        std::vector<Point> r = std::move(std::get<1>(partition));
+        std::vector<Point> r = std::move(std::get<2>(partition));
         uint8_t const child_splitting_axis = (current_node->splitting_axis() + 1) % 2;
         if (child_splitting_axis == 0) {
             concurrency::parallel_sort(l.begin(), l.end(), [this](Point const & p1, Point const & p2) {
