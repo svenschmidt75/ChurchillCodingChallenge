@@ -49,55 +49,12 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
             //    int a = 1;
             //    a++;
             //}
-
-            std::vector<Point> ps;
-            //for (auto l : leafs) {
-            //    for (auto i = 0; i < l->points().size(); ++i) {
-            //        Point const p = l->points()[i];
-            //        if (Helper::is_point_in_rect(p, rect)) {
-            //            ps.push_back(p);
-            //        }
-            //    }
-            //}
-
-            for (auto i = 0; i < kdtree.points().size(); ++i) {
-                Point const p = kdtree.points()[i];
-                if (Helper::is_point_in_rect(p, rect)) {
-                    ps.push_back(p);
-                }
-            }
-
-            concurrency::parallel_sort(ps.begin(), ps.end(), [](Point const & a, Point const & b) {
-                return a.rank < b.rank;
-            });
-
-
             auto points_inside_rect = Helper::intersect(leafs, rect);
             if (points_inside_rect.empty() == false) {
-
-
-
-
                 concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
                     return a.rank < b.rank;
                 });
-/*
-                if (ps.size() != points_inside_rect.size()) {
-                        std::cout << "Got that wrong" << std::endl;
-                }
-
-                bool is_equal = std::equal(points_inside_rect.begin(), points_inside_rect.end(), ps.begin(), [](Point const & p1, Point const & p2) { return p1.x == p2.x && p1.y == p1.y; });
-                if (is_equal == false) {
-                    std::cout << "Got that wrong" << std::endl;
-                }
-*/
-
-
-                KDTree kd(KDTree::MAX_POINTS_PER_LEAF, &sc->points[0], &sc->points[sc->points.size() - 1] + 1);
-
-
-//                auto const n_points = std::min(int(points_inside_rect.size()), count);
-                auto const n_points = std::min(int(ps.size()), count);
+                auto const n_points = std::min(int(points_inside_rect.size()), count);
                 for (size_t i = 0; i < n_points; ++i) {
                     //Point const p = points_inside_rect[i];
                     //if (Helper::is_point_in_rect(p, rect) == false) {
@@ -105,14 +62,9 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
                     //}
 
 
-//                    out_points[i] = points_inside_rect[i];
-                    out_points[i] = ps[i];
+                    out_points[i] = points_inside_rect[i];
                 }
                 return n_points;
-            } else {
-                if (ps.empty() == false) {
-                    std::cout << "Got that wrong" << std::endl;
-                }
             }
         }
         return 0;
@@ -171,7 +123,6 @@ KDTree::KDTree(uint64_t max_points_per_child, Point const * points_begin, Point 
         // split points at median
         auto partition = Helper::split(child_points, current_node->splitting_axis());
         current_node->splitting_value_ = std::get<0>(partition);
-
 
         // points should be both
         std::vector<Point> l = std::move(std::get<1>(partition));
