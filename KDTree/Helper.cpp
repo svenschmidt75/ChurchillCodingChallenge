@@ -56,35 +56,17 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
     std::vector<Point> points_inside_rect;
     for (auto leaf : leafs) {
         std::vector<Point> leaf_points = leaf->points();
-
-        std::vector<Point> pil;
-        for (auto const & p : leaf_points) {
-            if (Helper::is_point_in_rect(p, rect)) {
-                pil.push_back(p);
-            }
-        }
-
-
-
         if (leaf->splitting_axis() == 0) {
             // find all points that are in the range [rect.lx, rect.hx]
             // Note: The points MUST be sorted in x!!!
-
-            concurrency::parallel_sort(leaf_points.begin(), leaf_points.end(), [](Point const & a, Point const & b) {
-                return a.x < b.x;
-            });
             const auto points_begin = leaf_points.cbegin();
             const auto points_end = leaf_points.cend();
-
             auto x1 = std::lower_bound(points_begin, points_end, rect.lx, [](Point const & p, float r) {
                 return  p.x < r;
             });
             auto x2 = std::upper_bound(points_begin, points_end, rect.hx, [](float r, Point const & p) {
                 return  r < p.x;
             });
-
-
-
             if (x1 != points_end) {
                 for (; x1 != x2 && x1 != points_end; ++x1) {
                     Point const & p = *x1;
@@ -96,34 +78,19 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     }
                 }
             }
-            
-            if (std::equal(pil.begin(), pil.end(), points_inside_rect.begin(), [](Point const & p1, Point const & p2) {
-                return p1.x == p2.x && p1.y == p2.y && p1.rank == p2.rank && p1.id == p2.id;
-            }) == false) {
-                int a = 1;
-                a++;
-            }
 
         }
         else {
             // find all points that are in the range [rect.ly, rect.hy]
             // Note: The points MUST be sorted in y!!!
-
-            concurrency::parallel_sort(leaf_points.begin(), leaf_points.end(), [](Point const & a, Point const & b) {
-                return a.y < b.y;
-            });
             const auto points_begin = leaf_points.cbegin();
             const auto points_end = leaf_points.cend();
-
-
             auto y1 = std::lower_bound(points_begin, points_end, rect.ly, [](Point const & p, float r) {
                 return  p.y < r;
             });
             auto y2 = std::upper_bound(points_begin, points_end, rect.hy, [](float r, Point const & p) {
                 return  r < p.y;
             });
-
-
             if (y1 != points_end) {
                 for (; y1 != y2 && y1 != points_end; ++y1) {
                     Point const & p = *y1;
@@ -134,14 +101,6 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                         points_inside_rect.push_back(p);
                     }
                 }
-            }
-
-
-            if (std::equal(pil.begin(), pil.end(), points_inside_rect.begin(), [](Point const & p1, Point const & p2) {
-                return p1.x == p2.x && p1.y == p2.y && p1.rank == p2.rank && p1.id == p2.id;
-            }) == false) {
-                int a = 1;
-                a++;
             }
         }
     }
