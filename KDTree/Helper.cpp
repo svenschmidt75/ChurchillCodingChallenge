@@ -53,9 +53,11 @@ Helper::split(std::vector<Point> points, int axis) {
 
 std::vector<Point>
 Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & rect) {
-    std::vector<Point> points_inside_rect;
-    for (auto leaf : leafs) {
-        std::vector<Point> leaf_points = leaf->points();
+    concurrency::combinable<std::vector<Point>> combinable([]() {return std::vector<Point>(); });
+    concurrency::parallel_for(size_t(0), leafs.size(), [&combinable, &leafs, &rect](size_t leaf_index) {
+        auto & points_inside_rect = combinable.local();
+        auto const leaf = leafs[leaf_index];
+        auto const & leaf_points = leaf->points();
         if (leaf->splitting_axis() == 0) {
             // find all points that are in the range [rect.lx, rect.hx]
             // Note: The points MUST be sorted in x!!!
@@ -73,12 +75,10 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     if (p.x < rect.lx || p.x > rect.hx)
                         continue;
                     if (p.y >= rect.ly && p.y <= rect.hy) {
-                        //                            std::cout << "Point (" << p.x << "," << p.y << ") is in rect ((" << rect.lx << "," << rect.hx << "),(" << rect.ly << "," << rect.hy << ")..." << std::endl;
                         points_inside_rect.push_back(p);
                     }
                 }
             }
-
         }
         else {
             // find all points that are in the range [rect.ly, rect.hy]
@@ -97,14 +97,20 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     if (p.y < rect.ly || p.y > rect.hy)
                         continue;
                     if (p.x >= rect.lx && p.x <= rect.hx) {
-                        //                            std::cout << "Point (" << p.x << "," << p.y << ") is in rect ((" << rect.lx << "," << rect.hx << "),(" << rect.ly << "," << rect.hy << ")..." << std::endl;
                         points_inside_rect.push_back(p);
                     }
                 }
             }
         }
-    }
-    return points_inside_rect;
+    });
+
+    // combine
+    std::vector<Point> points_inside_rects;
+    combinable.combine_each([&points_inside_rects](std::vector<Point> points) {
+        points_inside_rects.insert(points_inside_rects.end(), points.cbegin(), points.cend());
+    });
+    return points_inside_rects;
+
 }
 
 bool
