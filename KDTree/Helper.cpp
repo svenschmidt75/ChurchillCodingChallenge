@@ -79,8 +79,7 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     }
                 }
             }
-        }
-        else {
+        } else {
             // find all points that are in the range [rect.ly, rect.hy]
             // Note: The points MUST be sorted in y!!!
             const auto points_begin = leaf_points.cbegin();
@@ -103,8 +102,6 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
             }
         }
     });
-
-    // combine
     std::vector<Point> points_inside_rects;
     combinable.combine_each([&points_inside_rects](std::vector<Point> points) {
         points_inside_rects.insert(points_inside_rects.end(), points.cbegin(), points.cend());
