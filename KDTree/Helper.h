@@ -20,7 +20,7 @@ namespace KDTree_NS {
     class KDTREE_EXPORTS_DECL_SYMBOLS Helper {
     public:
         static std::tuple<float, std::vector<Point>, std::vector<Point>> split(std::vector<Point> points, int axis);
-        static std::vector<Point>                                        intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & rect);
+        static std::vector<Point>                                        intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & rect, int32_t const count);
         static bool                                                      is_point_in_rect(Point const & p, Rect const & r);
     };
 
