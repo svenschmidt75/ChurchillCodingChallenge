@@ -59,34 +59,14 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
 
     using PQ = std::priority_queue<Point, std::vector<Point>, decltype(comp)>;
 
-    concurrency::combinable<std::priority_queue<Point, std::vector<Point>, decltype(comp)>> combinable([comp]() {return std::priority_queue<Point, std::vector<Point>, decltype(comp)>(comp); });
-    concurrency::combinable<std::vector<Point>> combinable2([]() {return std::vector<Point>(); });
-
     std::vector<PQ> pqs;
     pqs.resize(leafs.size(), PQ(comp));
 
-    concurrency::parallel_for(size_t(0), leafs.size(), [&combinable, &combinable2, &leafs, &rect, &pqs, count](size_t leaf_index) {
-        auto & pir = combinable2.local();
-
-//        bool res;
-//        auto & points_inside_rect = combinable.local(res);
+    concurrency::parallel_for(size_t(0), leafs.size(), [&pqs, &leafs, &rect, count](size_t leaf_index) {
         auto & points_inside_rect = pqs[leaf_index];
-
-
-        if (points_inside_rect.empty() == false) {
-            int a = 1;
-            a++;
-        }
-
-
         auto const leaf = leafs[leaf_index];
         auto const & leaf_points = leaf->points();
         auto max_rank = std::numeric_limits<int32_t>::min();
-
-        if ( leaf_index == 9) {
-            int a = 1;
-            a++;
-        }
         if (leaf->splitting_axis() == 0) {
             // find all points that are in the range [rect.lx, rect.hx]
             // Note: The points MUST be sorted in x!!!
@@ -104,34 +84,10 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     if (p.x < rect.lx || p.x > rect.hx)
                         continue;
                     if (p.y >= rect.ly && p.y <= rect.hy) {
-                        pir.push_back(p);
-                        
-                        if (p.rank == 0) {
-                            int a = 1;
-                            a++;
-                        }
-                        
-                        if (points_inside_rect.size() == count) {
-                            int a = 1;
-                            a++;
-                        }
-
                         if (points_inside_rect.size() < count || p.rank < max_rank) {
                             points_inside_rect.push(p);
                             max_rank = std::max(max_rank, p.rank);
-
-                            if (max_rank < 1) {
-                                int a = 1;
-                                a++;
-                            }
                         }
-                        // if < count, insert
-                        // remember max. rank
-                        // if number of elements = count, only insert if
-                        //  - rank smaller than maximum
-
-
-
                     }
                 }
             }
@@ -152,71 +108,35 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
                     if (p.y < rect.ly || p.y > rect.hy)
                         continue;
                     if (p.x >= rect.lx && p.x <= rect.hx) {
-                        pir.push_back(p);
-
-
-                        if (points_inside_rect.size() == count) {
-                            int a = 1;
-                            a++;
-                        }
-
                         if (points_inside_rect.size() < count || p.rank < max_rank) {
                             points_inside_rect.push(p);
-                            max_rank = std::min(max_rank, p.rank);
+                            max_rank = std::max(max_rank, p.rank);
                         }
-                        // if < count, insert
-                        // remember max. rank
-                        // if number of elements = count, only insert if
-                        //  - rank smaller than maximum
                     }
                 }
             }
         }
     });
-    std::vector<Point> points_inside_rects;
-    points_inside_rects.reserve(count);
     std::priority_queue<Point, std::vector<Point>, decltype(comp)> poi(comp);
-    //combinable.combine_each([&points_inside_rects, &poi, count](std::priority_queue<Point, std::vector<Point>, decltype(comp)> points) {
-    //    int c = count;
-    //    while (c > 0 && points.size() > 0) {
-    //        auto const & p = points.top();
-    //        points.pop();
-    //        poi.push(p);
-    //        --c;
-    //    }
-    //});
     for (auto i = 0; i < pqs.size(); ++i) {
         std::priority_queue<Point, std::vector<Point>, decltype(comp)> & points = pqs[i];
         int c = count;
-        while (c > 0 && points.size() > 0) {
+        while (c > 0 && points.empty() == false) {
             auto const & p = points.top();
             poi.push(p);
             points.pop();
             --c;
         }
     }
-    
+    std::vector<Point> points_inside_rects;
+    points_inside_rects.reserve(count);
     int c = count;
-    while (c > 0 && poi.size() > 0) {
+    while (c > 0 && poi.empty() == false) {
         auto const & p = poi.top();
         points_inside_rects.push_back(p);
         poi.pop();
         --c;
     }
-
-    
-    std::vector<Point> points_inside_rects2;
-    combinable2.combine_each([&points_inside_rects2, count](std::vector<Point> points) {
-        concurrency::parallel_sort(points.begin(), points.end(), [](Point const & a, Point const & b) {
-            return a.rank < b.rank;
-        });
-        for (auto i = 0, c = 0; i < points.size() && c < count; ++i, ++c) {
-            points_inside_rects2.push_back(points[i]);
-        }
-    });
-    concurrency::parallel_sort(points_inside_rects2.begin(), points_inside_rects2.end(), [](Point const & a, Point const & b) {
-        return a.rank < b.rank;
-    });
     return points_inside_rects;
 }
 

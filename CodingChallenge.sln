@@ -22,13 +22,15 @@ Global
 		{7BA108DD-FD17-4D9A-9968-F950B999FB0D}.Release|x64.Build.0 = Release|x64
 		{C510AA8E-D550-4503-A6F6-67F58A08C770}.Debug|x64.ActiveCfg = Debug|x64
 		{C510AA8E-D550-4503-A6F6-67F58A08C770}.Release|x64.ActiveCfg = Release|x64
-		{C510AA8E-D550-4503-A6F6-67F58A08C770}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {03998676-4A84-4785-9E36-1A5CBA3DD16B}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
