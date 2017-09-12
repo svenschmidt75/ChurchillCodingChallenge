@@ -62,55 +62,70 @@ Helper::intersect(std::vector<KDTreeNode const *> const & leafs, Rect const & re
     std::vector<PQ> pqs;
     pqs.resize(leafs.size(), PQ(comp));
 
-    concurrency::parallel_for(size_t(0), leafs.size(), [&pqs, &leafs, &rect, count](size_t leaf_index) {
-        auto & points_inside_rect = pqs[leaf_index];
-        auto const leaf = leafs[leaf_index];
-        auto const & leaf_points = leaf->points();
-        auto max_rank = std::numeric_limits<int32_t>::min();
-        if (leaf->splitting_axis() == 0) {
-            // find all points that are in the range [rect.lx, rect.hx]
-            // Note: The points MUST be sorted in x!!!
-            const auto points_begin = leaf_points.cbegin();
-            const auto points_end = leaf_points.cend();
-            auto x1 = std::lower_bound(points_begin, points_end, rect.lx, [](Point const & p, float r) {
-                return  p.x < r;
-            });
-            auto x2 = std::upper_bound(points_begin, points_end, rect.hx, [](float r, Point const & p) {
-                return  r < p.x;
-            });
-            if (x1 != points_end) {
-                for (; x1 != x2 && x1 != points_end; ++x1) {
-                    Point const & p = *x1;
-                    if (p.x < rect.lx || p.x > rect.hx)
-                        continue;
-                    if (p.y >= rect.ly && p.y <= rect.hy) {
-                        if (points_inside_rect.size() < count || p.rank < max_rank) {
-                            points_inside_rect.push(p);
-                            max_rank = std::max(max_rank, p.rank);
+
+    auto number_of_processors = size_t(std::thread::hardware_concurrency());
+    if (leafs.size() < number_of_processors)
+        number_of_processors = leafs.size();
+    auto chunk_size = leafs.size() / number_of_processors;
+
+
+//    std::cout << leafs.size() << "," << chunk_size << std::endl;
+
+    concurrency::parallel_for(size_t(0), leafs.size(), chunk_size, [&pqs, &leafs, &rect, count, chunk_size](size_t leaf_index) {
+
+//        std::cout << leaf_index << std::endl;
+
+        for (auto li = leaf_index; li < leaf_index + chunk_size; ++li) {
+            auto & points_inside_rect = pqs[li];
+            auto const leaf = leafs[li];
+            auto const & leaf_points = leaf->points();
+            auto max_rank = std::numeric_limits<int32_t>::min();
+            if (leaf->splitting_axis() == 0) {
+                // find all points that are in the range [rect.lx, rect.hx]
+                // Note: The points MUST be sorted in x!!!
+                const auto points_begin = leaf_points.cbegin();
+                const auto points_end = leaf_points.cend();
+                auto x1 = std::lower_bound(points_begin, points_end, rect.lx, [](Point const & p, float r) {
+                    return  p.x < r;
+                });
+                auto x2 = std::upper_bound(points_begin, points_end, rect.hx, [](float r, Point const & p) {
+                    return  r < p.x;
+                });
+                if (x1 != points_end) {
+                    for (; x1 != x2 && x1 != points_end; ++x1) {
+                        Point const & p = *x1;
+                        if (p.x < rect.lx || p.x > rect.hx)
+                            continue;
+                        if (p.y >= rect.ly && p.y <= rect.hy) {
+                            if (points_inside_rect.size() < count || p.rank < max_rank) {
+                                points_inside_rect.push(p);
+                                max_rank = std::max(max_rank, p.rank);
+                            }
                         }
                     }
                 }
             }
-        } else {
-            // find all points that are in the range [rect.ly, rect.hy]
-            // Note: The points MUST be sorted in y!!!
-            const auto points_begin = leaf_points.cbegin();
-            const auto points_end = leaf_points.cend();
-            auto y1 = std::lower_bound(points_begin, points_end, rect.ly, [](Point const & p, float r) {
-                return  p.y < r;
-            });
-            auto y2 = std::upper_bound(points_begin, points_end, rect.hy, [](float r, Point const & p) {
-                return  r < p.y;
-            });
-            if (y1 != points_end) {
-                for (; y1 != y2 && y1 != points_end; ++y1) {
-                    Point const & p = *y1;
-                    if (p.y < rect.ly || p.y > rect.hy)
-                        continue;
-                    if (p.x >= rect.lx && p.x <= rect.hx) {
-                        if (points_inside_rect.size() < count || p.rank < max_rank) {
-                            points_inside_rect.push(p);
-                            max_rank = std::max(max_rank, p.rank);
+            else {
+                // find all points that are in the range [rect.ly, rect.hy]
+                // Note: The points MUST be sorted in y!!!
+                const auto points_begin = leaf_points.cbegin();
+                const auto points_end = leaf_points.cend();
+                auto y1 = std::lower_bound(points_begin, points_end, rect.ly, [](Point const & p, float r) {
+                    return  p.y < r;
+                });
+                auto y2 = std::upper_bound(points_begin, points_end, rect.hy, [](float r, Point const & p) {
+                    return  r < p.y;
+                });
+                if (y1 != points_end) {
+                    for (; y1 != y2 && y1 != points_end; ++y1) {
+                        Point const & p = *y1;
+                        if (p.y < rect.ly || p.y > rect.hy)
+                            continue;
+                        if (p.x >= rect.lx && p.x <= rect.hx) {
+                            if (points_inside_rect.size() < count || p.rank < max_rank) {
+                                points_inside_rect.push(p);
+                                max_rank = std::max(max_rank, p.rank);
+                            }
                         }
                     }
                 }

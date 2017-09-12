@@ -52,9 +52,9 @@ search(SearchContext * sc, Rect const rect, int32_t const count, Point * out_poi
             auto points_inside_rect = Helper::intersect(leafs, rect, count);
             if (points_inside_rect.empty() == false) {
 //                std::cout << "Sorint " << points_inside_rect.size() << " by rank..." << std::endl;
-                concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
-                    return a.rank < b.rank;
-                });
+                //concurrency::parallel_sort(points_inside_rect.begin(), points_inside_rect.end(), [](Point const & a, Point const & b) {
+                //    return a.rank < b.rank;
+                //});
                 auto const n_points = std::min(int(points_inside_rect.size()), count);
                 for (size_t i = 0; i < n_points; ++i)
                     out_points[i] = points_inside_rect[i];
